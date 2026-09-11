@@ -1,0 +1,171 @@
+{
+  "medications": [
+    {
+      "name": "Epinephrine",
+      "class": "Catecholamine / Sympathomimetic",
+      "mechanism": "Alpha and beta adrenergic agonist",
+      "indications": ["Cardiac arrest (all rhythms)", "Symptomatic bradycardia", "Anaphylaxis", "Hypotensive shock"],
+      "routes": ["IV", "IO", "ET", "IM"],
+      "doses": {
+        "cardiacArrest": { "route": "IV/IO", "dose": "0.01 mg/kg", "concentration": "1:10,000 (0.1 mg/mL)", "maxDose": "1 mg", "frequency": "Every 3-5 minutes" },
+        "etRoute": { "dose": "0.1 mg/kg", "concentration": "1:1,000 (1 mg/mL)", "maxDose": "2.5 mg" },
+        "infusion": { "dose": "0.03-0.2 mcg/kg/min", "indication": "Post-arrest hemodynamic support or hypotensive shock" },
+        "anaphylaxis": { "route": "IM", "dose": "0.01 mg/kg", "concentration": "1:1,000", "maxDose": "0.5 mg" }
+      },
+      "keyPoints": ["Early administration in nonshockable rhythms improves survival", "Flush with 5mL normal saline after IV/IO push"],
+      "tier": "must"
+    },
+    {
+      "name": "Amiodarone",
+      "class": "Antiarrhythmic",
+      "mechanism": "Class III antiarrhythmic (prolongs action potential)",
+      "indications": ["VF/pVT", "SVT (refractory)"],
+      "routes": ["IV", "IO"],
+      "doses": {
+        "cardiacArrest": { "route": "IV/IO", "dose": "5 mg/kg", "maxDose": "300 mg per dose", "frequency": "Can repeat up to 2 times for refractory VF/pVT", "totalMax": "15 mg/kg or 2.2 g over 24 hours" },
+        "perfusingTachycardia": { "route": "IV/IO", "dose": "5 mg/kg", "duration": "Over 20-60 minutes" }
+      },
+      "keyPoints": ["Rapid push in cardiac arrest", "Slow infusion in perfusing tachycardias to avoid hypotension"],
+      "tier": "must"
+    },
+    {
+      "name": "Lidocaine",
+      "class": "Antiarrhythmic",
+      "mechanism": "Class Ib antiarrhythmic (sodium channel blocker)",
+      "indications": ["VF/pVT (alternative to amiodarone)"],
+      "routes": ["IV", "IO", "ET"],
+      "doses": {
+        "loadingDose": { "route": "IV/IO", "dose": "1 mg/kg", "maxDose": "100 mg" },
+        "infusion": { "dose": "20-50 mcg/kg/min", "indication": "Maintenance post-arrest if used" },
+        "etRoute": { "dose": "2-3 mg/kg" }
+      },
+      "keyPoints": ["Equivalent efficacy to amiodarone for shock-refractory VF/pVT in children"],
+      "tier": "must"
+    },
+    {
+      "name": "Atropine",
+      "class": "Anticholinergic",
+      "mechanism": "Parasympatholytic",
+      "indications": ["Symptomatic bradycardia (vagally mediated)", "Organophosphate poisoning"],
+      "routes": ["IV", "IO", "ET"],
+      "doses": {
+        "bradycardia": { "route": "IV/IO", "dose": "0.02 mg/kg", "minDose": "0.1 mg", "maxDose": "0.5 mg (child) / 1 mg (adolescent)", "frequency": "May repeat once" },
+        "toxidrome": { "dose": "Larger doses required for organophosphate poisoning" }
+      },
+      "keyPoints": ["Paradoxical bradycardia if administered < 0.1 mg"],
+      "tier": "must"
+    },
+    {
+      "name": "Adenosine",
+      "class": "Antiarrhythmic",
+      "mechanism": "Slows AV node conduction",
+      "indications": ["SVT (regular, narrow-complex tachycardia)"],
+      "routes": ["IV", "IO"],
+      "doses": {
+        "firstDose": { "route": "IV/IO", "dose": "0.1 mg/kg", "maxDose": "6 mg", "method": "Rapid IV push" },
+        "secondDose": { "route": "IV/IO", "dose": "0.2 mg/kg", "maxDose": "12 mg", "method": "Rapid IV push" }
+      },
+      "keyPoints": ["Half-life is <10 seconds; requires rapid push and immediate saline flush"],
+      "tier": "must"
+    },
+    {
+      "name": "Magnesium sulfate",
+      "class": "Electrolyte",
+      "mechanism": "Calcium channel blocker, smooth muscle relaxant",
+      "indications": ["Torsades de pointes", "Hypomagnesemia", "Status asthmaticus"],
+      "routes": ["IV", "IO"],
+      "doses": {
+        "cardiacArrest": { "route": "IV/IO", "dose": "25-50 mg/kg", "maxDose": "2 g", "duration": "Rapid push in arrest" },
+        "asthma": { "route": "IV/IO", "dose": "25-50 mg/kg", "maxDose": "2 g", "duration": "Infuse over 15-30 minutes" }
+      },
+      "keyPoints": ["Rapid administration can cause hypotension in non-arrest scenarios"],
+      "tier": "must"
+    },
+    {
+      "name": "Glucose",
+      "class": "Carbohydrate",
+      "mechanism": "Increases blood glucose",
+      "indications": ["Hypoglycemia"],
+      "routes": ["IV", "IO"],
+      "doses": {
+        "d10w": { "dose": "5-10 mL/kg", "target": "0.5-1 g/kg" },
+        "d25w": { "dose": "2-4 mL/kg", "target": "0.5-1 g/kg" },
+        "d50w": { "dose": "1-2 mL/kg", "target": "0.5-1 g/kg", "note": "Use larger veins, avoid in young children" }
+      },
+      "keyPoints": ["Always check glucose in critically ill patients", "D10W preferred for neonates/infants"],
+      "tier": "must"
+    },
+    {
+      "name": "Naloxone",
+      "class": "Opioid antagonist",
+      "mechanism": "Competitive opioid receptor antagonist",
+      "indications": ["Opioid overdose with respiratory depression"],
+      "routes": ["IV", "IO", "IM", "IN", "ET"],
+      "doses": {
+        "standard": { "dose": "0.1 mg/kg", "maxDose": "2 mg per dose", "frequency": "Repeat every 2-3 min as needed" }
+      },
+      "keyPoints": ["Half-life shorter than many opioids; repeat doses or infusion may be needed"],
+      "tier": "must"
+    },
+    {
+      "name": "Norepinephrine",
+      "class": "Catecholamine / Vasopressor",
+      "mechanism": "Strong alpha-1, moderate beta-1 agonist",
+      "indications": ["Septic shock", "Distributive shock", "Hypotension with low SVR"],
+      "routes": ["IV", "IO"],
+      "doses": {
+        "infusion": { "dose": "0.05-0.5 mcg/kg/min", "titration": "Titrate to effect" }
+      },
+      "keyPoints": ["Central line preferred", "Monitor for tissue necrosis if extravasation occurs"],
+      "tier": "must"
+    },
+    {
+      "name": "Dopamine",
+      "class": "Catecholamine",
+      "mechanism": "Dopaminergic, beta-1, and alpha-1 agonist (dose dependent)",
+      "indications": ["Hypotension", "Cardiogenic or distributive shock"],
+      "routes": ["IV", "IO"],
+      "doses": {
+        "infusion": { "dose": "2-20 mcg/kg/min", "titration": "Titrate to effect" }
+      },
+      "keyPoints": ["High doses (>10 mcg/kg/min) required for alpha effect (vasoconstriction)", "May cause tachyarrhythmias"],
+      "tier": "nice"
+    },
+    {
+      "name": "Procainamide",
+      "class": "Antiarrhythmic",
+      "mechanism": "Class Ia antiarrhythmic",
+      "indications": ["SVT", "VT (with pulses)", "Atrial flutter/fibrillation"],
+      "routes": ["IV", "IO"],
+      "doses": {
+        "infusion": { "dose": "15 mg/kg", "duration": "Over 30-60 minutes" }
+      },
+      "keyPoints": ["Stop infusion if QRS widens >50% or hypotension develops", "Do not administer routinely with amiodarone"],
+      "tier": "nice"
+    },
+    {
+      "name": "Calcium chloride",
+      "class": "Electrolyte",
+      "mechanism": "Increases contractility, stabilizes myocardium",
+      "indications": ["Hyperkalemia", "Hypocalcemia", "Hypermagnesemia", "Calcium channel blocker overdose"],
+      "routes": ["IV", "IO"],
+      "doses": {
+        "standard": { "dose": "20 mg/kg (0.2 mL/kg of 10% solution)", "maxDose": "2 g", "frequency": "Can repeat if needed" }
+      },
+      "keyPoints": ["Administer slowly unless in cardiac arrest", "Calcium gluconate preferred for peripheral IV to avoid tissue necrosis"],
+      "tier": "must"
+    },
+    {
+      "name": "Sodium bicarbonate",
+      "class": "Alkalinizing agent",
+      "mechanism": "Buffers H+ ions",
+      "indications": ["Severe metabolic acidosis", "Hyperkalemia", "Tricyclic antidepressant overdose"],
+      "routes": ["IV", "IO"],
+      "doses": {
+        "standard": { "dose": "1 mEq/kg", "maxDose": "50 mEq", "frequency": "Based on blood gas" }
+      },
+      "keyPoints": ["Ensure adequate ventilation before use", "Flush lines well to prevent precipitation with other drugs"],
+      "tier": "nice"
+    }
+  ]
+}

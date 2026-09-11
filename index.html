@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PALS 2025 — World-Class Pediatric Emergency Training</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Top Navigation -->
+  <header class="top-nav">
+    <div class="nav-left">
+      <button class="icon-btn mobile-menu-btn" id="hamburger" aria-label="Menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="heartbeat-icon">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+        </svg>
+        <span>PALS 2025</span>
+      </div>
+    </div>
+    <div class="nav-center">
+      <div class="nav-progress">
+        <div class="nav-progress-bar">
+          <div class="nav-progress-fill" style="width: 0%"></div>
+        </div>
+        <span class="nav-progress-pct">0%</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="icon-btn" id="theme-toggle" aria-label="Toggle Theme">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <!-- Left Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="course-header">
+        <h2>Pediatric Advanced Life Support</h2>
+        <p>2025 Provider Course</p>
+      </div>
+
+      <div class="module-list">
+        <ul id="sidebar-modules">
+          <!-- Rendered dynamically by app.js -->
+        </ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <h3>Quick Access</h3>
+        <button class="quick-link" data-action="meds">💊 Medications</button>
+        <button class="quick-link" data-action="algos">🗺️ Algorithms</button>
+        <button class="quick-link" data-action="cards">🃏 Flashcards</button>
+        <button class="quick-link" data-action="progress">📊 My Progress</button>
+      </div>
+    </aside>
+
+    <!-- Main Learning Area -->
+    <main class="learning-area" id="learning-area">
+      <!-- Breadcrumbs -->
+      <nav class="breadcrumbs" id="breadcrumbs">
+        <!-- Rendered by app.js -->
+      </nav>
+
+      <!-- Unit Progress Stepper -->
+      <div class="unit-stepper-container">
+        <div class="unit-stepper" id="unit-stepper">
+          <!-- Rendered by app.js: step dots + connectors -->
+        </div>
+      </div>
+
+      <!-- Unit Header -->
+      <div class="unit-header" id="unit-header">
+        <!-- Rendered by app.js -->
+      </div>
+
+      <!-- Three-Tier Content Area -->
+      <div class="tier-content" id="tier-content">
+        <!-- Rendered by app.js:
+          🔴 MUST KNOW section (always open, red left border)
+          🟡 NICE TO KNOW section (collapsible accordion, amber)
+          🟢 GOOD TO KNOW section (collapsible accordion, green)
+        -->
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading course content...</p>
+        </div>
+      </div>
+
+      <!-- Complete & Continue Button -->
+      <div class="unit-footer" id="unit-footer">
+        <button class="btn-complete" id="btn-complete" disabled>
+          <span>Loading...</span>
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Bar -->
+  <nav class="mobile-bar" id="mobile-bar">
+    <button class="mob-btn active" data-action="learn"><span>📚</span><span>Learn</span></button>
+    <button class="mob-btn" data-action="meds"><span>💊</span><span>Meds</span></button>
+    <button class="mob-btn" data-action="algos"><span>🗺️</span><span>Algos</span></button>
+    <button class="mob-btn" data-action="cards"><span>🃏</span><span>Cards</span></button>
+    <button class="mob-btn" data-action="progress"><span>📊</span><span>Progress</span></button>
+  </nav>
+
+  <!-- Modal Container -->
+  <div id="modal-overlay" class="modal-overlay"></div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- App Script -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
