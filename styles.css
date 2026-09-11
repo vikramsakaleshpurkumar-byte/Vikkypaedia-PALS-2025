@@ -998,6 +998,11 @@ body.light-theme {
 .badge-title { display: block; font-size: 0.75rem; font-weight: 600; }
 .badge-desc { display: block; font-size: 0.65rem; color: var(--text-muted); }
 
+/* Settings Form */
+.radio-card { transition: all var(--transition-fast); }
+.radio-card:hover { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.15); }
+.radio-card input:checked + .rc-content strong { color: var(--accent-primary); }
+
 /* Print Styles */
 @media print {
   .top-nav, .sidebar, .mobile-bar, .unit-footer { display: none; }

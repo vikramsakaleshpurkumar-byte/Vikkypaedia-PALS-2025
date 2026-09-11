@@ -19,7 +19,11 @@ import { ProgressTracker } from './components/progress-tracker.js';
    1. Global Event Bus & State
    ────────────────────────────────────────── */
 window.PALSApp = {
-  state: { currentModuleId: null, currentUnitIndex: 0 },
+  state: { 
+    currentModuleId: null, 
+    currentUnitIndex: 0,
+    profile: JSON.parse(localStorage.getItem('pals-profile')) || { role: 'PG', mode: 'all' }
+  },
   events: new EventTarget(),
   emit(ev, detail) { this.events.dispatchEvent(new CustomEvent(ev, { detail })); },
   on(ev, fn) { this.events.addEventListener(ev, fn); },
@@ -43,6 +47,10 @@ class PALSApplication {
     this.bindGlobalListeners();
     this.renderSidebar();
     this.updateOverallProgress();
+    
+    // Set initial role label
+    const roleLabel = document.getElementById('course-role-label');
+    if (roleLabel) roleLabel.textContent = window.PALSApp.state.profile.role + ' Track';
 
     const last = this.progress.getLastActive();
     this.navigateTo(last?.moduleId || 'module-01', last?.unitIndex || 0);
@@ -240,14 +248,14 @@ class PALSApplication {
     tierEl.innerHTML += this.renderTierSection('must', '🔴', 'Must Know',
       'Critical — You must master this', unit.mustKnow, false);
 
-    // 🟡 NICE TO KNOW — collapsible, starts collapsed
-    if (unit.niceToKnow?.points?.length > 0) {
+    // 🟡 NICE TO KNOW — collapsible, starts collapsed (skip if must-only)
+    if (unit.niceToKnow?.points?.length > 0 && window.PALSApp.state.profile.mode !== 'must-only') {
       tierEl.innerHTML += this.renderTierSection('nice', '🟡', 'Nice to Know',
         'Important context — Deepen your understanding', unit.niceToKnow, true);
     }
 
-    // 🟢 GOOD TO KNOW — collapsible, starts collapsed
-    if (unit.goodToKnow?.points?.length > 0) {
+    // 🟢 GOOD TO KNOW — collapsible, starts collapsed (skip if must-only)
+    if (unit.goodToKnow?.points?.length > 0 && window.PALSApp.state.profile.mode !== 'must-only') {
       tierEl.innerHTML += this.renderTierSection('good', '🟢', 'Good to Know',
         'Enrichment — Go deeper if you\'re curious', unit.goodToKnow, true);
     }
@@ -550,6 +558,67 @@ class PALSApplication {
     }
   }
 
+  showSettingsModal() {
+    const p = window.PALSApp.state.profile;
+    const html = `
+      <div class="settings-form">
+        <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">Customize your learning experience based on your clinical background and available time.</p>
+        
+        <div class="setting-group">
+          <label style="display:block; font-weight:600; margin-bottom:0.5rem;">👤 Your Role</label>
+          <select id="set-role" class="settings-select">
+            <option value="Nurse" ${p.role==='Nurse'?'selected':''}>Nurse</option>
+            <option value="UG" ${p.role==='UG'?'selected':''}>Undergraduate Medical (UG)</option>
+            <option value="PG" ${p.role==='PG'?'selected':''}>Postgraduate Resident (PG)</option>
+            <option value="Faculty" ${p.role==='Faculty'?'selected':''}>Faculty / Senior Clinician</option>
+          </select>
+        </div>
+
+        <div class="setting-group" style="margin-top: 1.5rem;">
+          <label style="display:block; font-weight:600; margin-bottom:0.5rem;">📚 Content Depth</label>
+          <div class="radio-group" style="display:flex; flex-direction:column; gap:0.5rem;">
+            <label class="radio-card" style="display:flex; gap:0.75rem; padding:1rem; border:1px solid var(--border-glass); border-radius:6px; cursor:pointer;">
+              <input type="radio" name="set-mode" value="must-only" ${p.mode==='must-only'?'checked':''}>
+              <div class="rc-content">
+                <strong style="display:block;">Express Mode (Must Know Only)</strong>
+                <span style="font-size:0.875rem; color:var(--text-secondary);">Only the absolute critical content & quizzes. Saves time by hiding extra tiers.</span>
+              </div>
+            </label>
+            <label class="radio-card" style="display:flex; gap:0.75rem; padding:1rem; border:1px solid var(--border-glass); border-radius:6px; cursor:pointer;">
+              <input type="radio" name="set-mode" value="all" ${p.mode==='all'?'checked':''}>
+              <div class="rc-content">
+                <strong style="display:block;">Comprehensive (All Tiers)</strong>
+                <span style="font-size:0.875rem; color:var(--text-secondary);">Includes "Nice to Know" and "Good to Know" sections. Recommended.</span>
+              </div>
+            </label>
+          </div>
+        </div>
+        
+        <button id="btn-save-settings" class="btn-complete ready" style="margin-top: 2rem; width: 100%;">Save Preferences</button>
+      </div>
+    `;
+    this.showModal('⚙️ Customise Learning', html);
+    
+    document.getElementById('btn-save-settings').addEventListener('click', () => {
+      const role = document.getElementById('set-role').value;
+      const mode = document.querySelector('input[name="set-mode"]:checked').value;
+      window.PALSApp.state.profile = { role, mode };
+      localStorage.setItem('pals-profile', JSON.stringify({ role, mode }));
+      this.closeModal();
+      this.toast('Preferences saved! Experience updated.', 'success');
+      
+      // Update UI elements
+      document.getElementById('course-role-label').textContent = role + ' Track';
+      
+      // Re-render current unit to apply depth settings
+      const mod = window.PALSApp.data.curriculum.modules.find(m => m.id === window.PALSApp.state.currentModuleId);
+      if(mod) {
+        const unit = mod.units[window.PALSApp.state.currentUnitIndex];
+        this.renderUnitContent(mod, unit, window.PALSApp.state.currentUnitIndex);
+      }
+    });
+  }
+
   /* ────────────────────────────────────
      GLOBAL LISTENERS
      ──────────────────────────────────── */
@@ -568,6 +637,7 @@ class PALSApplication {
     document.querySelectorAll('[data-action]').forEach(btn => {
       btn.addEventListener('click', () => {
         const action = btn.dataset.action;
+        if (action === 'settings') this.showSettingsModal();
         if (action === 'meds') this.showMedsModal();
         if (action === 'algos') this.showModal('🗺️ Algorithms', '<p>Interactive algorithms coming in Phase 2.</p>');
         if (action === 'cards') this.showFlashcardsModal();
