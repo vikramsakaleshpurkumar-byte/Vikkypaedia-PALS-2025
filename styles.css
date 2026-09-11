@@ -50,7 +50,20 @@
   --transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Base Styles */
+/* Base Styles & Animations */
+@keyframes pulseHeart {
+  0% { transform: scale(1); filter: drop-shadow(0 0 5px var(--tier-must-glow)); }
+  15% { transform: scale(1.15); filter: drop-shadow(0 0 15px var(--tier-must)); }
+  30% { transform: scale(1); filter: drop-shadow(0 0 5px var(--tier-must-glow)); }
+  45% { transform: scale(1.15); filter: drop-shadow(0 0 15px var(--tier-must)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 5px var(--tier-must-glow)); }
+}
+
+@keyframes slideUpFade {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -116,7 +129,10 @@ code { font-family: 'JetBrains Mono', monospace; }
   font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.25rem;
   color: var(--text-primary); letter-spacing: -0.02em;
 }
-.heartbeat-icon { color: var(--accent-danger); filter: drop-shadow(0 0 8px var(--tier-must-glow)); }
+.heartbeat-icon { 
+  color: var(--accent-danger); filter: drop-shadow(0 0 8px var(--tier-must-glow));
+  animation: pulseHeart 2s infinite; transform-origin: center;
+}
 
 .nav-center { flex: 1; display: flex; justify-content: center; }
 .nav-progress { display: flex; align-items: center; gap: 1rem; width: 100%; max-width: 400px; }
@@ -340,7 +356,11 @@ code { font-family: 'JetBrains Mono', monospace; }
   border-top: 1px solid var(--border-subtle);
   border-right: 1px solid var(--border-subtle);
   border-bottom: 1px solid var(--border-subtle);
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
+.tier-section:nth-child(1) { animation-delay: 0.05s; }
+.tier-section:nth-child(2) { animation-delay: 0.15s; }
+.tier-section:nth-child(3) { animation-delay: 0.25s; }
 .tier-section:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
@@ -387,6 +407,18 @@ code { font-family: 'JetBrains Mono', monospace; }
 }
 .callout-danger { border-left: 4px solid var(--accent-danger); background: var(--tier-must-bg); }
 .callout h4 { font-size: 1.1rem; margin-bottom: 0.75rem; letter-spacing: -0.01em; }
+
+/* Injected Images */
+.content-image-wrapper {
+  margin: 2rem 0; border-radius: 16px; overflow: hidden;
+  box-shadow: var(--shadow-lg); border: 1px solid var(--border-glass);
+  background: var(--bg-tertiary); display: flex; justify-content: center;
+}
+.content-image {
+  width: 100%; max-width: 100%; height: auto; display: block;
+  transition: transform var(--transition-bounce);
+}
+.content-image:hover { transform: scale(1.02); }
 
 /* Quiz Styling */
 .tier-quiz {

@@ -305,9 +305,10 @@ class PALSApplication {
   }
 
   renderPoint(pt) {
+    let html = '';
     switch (pt.type) {
       case 'callout':
-        return `
+        html = `
           <div class="content-callout">
             <span class="callout-marker">⚡</span>
             <div>
@@ -315,18 +316,20 @@ class PALSApplication {
               <p>${this.fmt(pt.body)}</p>
             </div>
           </div>`;
+        break;
 
       case 'list':
-        return `
+        html = `
           <div class="content-block">
             ${pt.heading ? `<h4>${pt.heading}</h4>` : ''}
             <ul class="content-list">
               ${(pt.items || []).map(li => `<li>${this.fmt(li)}</li>`).join('')}
             </ul>
           </div>`;
+        break;
 
       case 'table':
-        return `
+        html = `
           <div class="content-block table-wrap">
             ${pt.heading ? `<h4>${pt.heading}</h4>` : ''}
             <div class="table-scroll">
@@ -338,14 +341,25 @@ class PALSApplication {
               </table>
             </div>
           </div>`;
+        break;
 
       default: // 'text'
-        return `
+        html = `
           <div class="content-block">
             ${pt.heading ? `<h4>${pt.heading}</h4>` : ''}
             <p>${this.fmt(pt.body || '')}</p>
           </div>`;
+        break;
     }
+
+    if (pt.imageUrl) {
+      html += `
+        <div class="content-image-wrapper">
+          <img src="${pt.imageUrl}" alt="${pt.heading || 'Illustration'}" class="content-image" loading="lazy">
+        </div>`;
+    }
+
+    return html;
   }
 
   fmt(text) {
