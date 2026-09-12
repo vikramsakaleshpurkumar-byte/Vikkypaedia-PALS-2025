@@ -633,6 +633,88 @@ class PALSApplication {
     });
   }
 
+  showCertificateModal() {
+    const stats = this.progress.getOverallProgress(window.PALSApp.data.curriculum);
+    const isComplete = stats.percentage === 100;
+    
+    let html = '';
+    
+    if (!isComplete) {
+      html = `
+        <div style="text-align: center; padding: 2rem;">
+          <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;">🔒🎓</div>
+          <h3 style="margin-bottom: 1rem;">Certificate Locked</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+            You have completed <strong>${stats.percentage}%</strong> of the course. 
+            Finish all modules and pass all knowledge checks to unlock your official PALS 2025 Certificate!
+          </p>
+          <div class="sb-progress-track" style="height: 10px; border-radius: 5px; margin-bottom: 2rem;">
+            <div class="sb-progress-fill" style="width: ${stats.percentage}%;"></div>
+          </div>
+          <button class="btn-complete ready no-print" onclick="document.getElementById('modal-overlay').classList.remove('active')">Continue Learning</button>
+        </div>
+      `;
+    } else {
+      let userName = localStorage.getItem('pals-user-name') || '';
+      
+      html = `
+        <div id="cert-setup" style="display: ${userName ? 'none' : 'block'}; text-align: center; padding: 2rem;">
+          <h3>🎉 Congratulations!</h3>
+          <p style="margin: 1rem 0; color: var(--text-secondary);">You've completed the entire course. Enter your name as you want it to appear on your certificate:</p>
+          <input type="text" id="cert-name-input" value="${userName}" placeholder="Dr. Jane Doe" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--border-glass); background: var(--bg-tertiary); color: white; font-size: 1.1rem; margin-bottom: 1rem;">
+          <button id="btn-generate-cert" class="btn-complete ready">Generate Certificate</button>
+        </div>
+        
+        <div id="cert-display" style="display: ${userName ? 'block' : 'none'};">
+          <div class="certificate-wrap certificate-print-area">
+            <div class="cert-inner">
+              <div class="cert-header">CERTIFICATE OF COMPLETION</div>
+              <div class="cert-body">
+                <p>This is to formally certify that</p>
+                <h1 class="cert-name" id="display-cert-name">${userName}</h1>
+                <p>has successfully completed all modules and knowledge checks for</p>
+                <h2 class="cert-course">Pediatric Advanced Life Support (PALS) 2025</h2>
+                <p class="cert-role">Track: ${window.PALSApp.state.profile.role}</p>
+              </div>
+              <div class="cert-footer">
+                <div class="cert-sig">
+                  <div class="sig-line"></div>
+                  <p>Course Director<br>Vikkypaedia</p>
+                </div>
+                <div class="cert-seal">🎓</div>
+                <div class="cert-date">
+                  <div class="sig-line"></div>
+                  <p>Date<br>${new Date().toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align: center; margin-top: 2rem;" class="no-print">
+            <button class="btn-complete ready" onclick="window.print()" style="display: inline-flex; width: auto; padding: 0.75rem 2rem; font-size: 1rem;"><span class="quiz-icon">🖨️</span> Print / Save as PDF</button>
+            <button class="btn-complete" onclick="document.getElementById('cert-setup').style.display='block'; document.getElementById('cert-display').style.display='none';" style="display: inline-flex; width: auto; padding: 0.75rem 2rem; font-size: 1rem; background: transparent; box-shadow: none; border: 1px solid var(--border-glass);">Edit Name</button>
+          </div>
+        </div>
+      `;
+    }
+    
+    this.showModal('Course Certificate', html);
+    
+    if (isComplete) {
+      const btnGen = document.getElementById('btn-generate-cert');
+      if (btnGen) {
+        btnGen.addEventListener('click', () => {
+          const inputName = document.getElementById('cert-name-input').value.trim();
+          if (inputName) {
+            localStorage.setItem('pals-user-name', inputName);
+            document.getElementById('display-cert-name').textContent = inputName;
+            document.getElementById('cert-setup').style.display = 'none';
+            document.getElementById('cert-display').style.display = 'block';
+          }
+        });
+      }
+    }
+  }
+
   /* ────────────────────────────────────
      GLOBAL LISTENERS
      ──────────────────────────────────── */
@@ -652,6 +734,7 @@ class PALSApplication {
       btn.addEventListener('click', () => {
         const action = btn.dataset.action;
         if (action === 'settings') this.showSettingsModal();
+        if (action === 'certificate') this.showCertificateModal();
         if (action === 'meds') this.showMedsModal();
         if (action === 'algos') this.showModal('🗺️ Algorithms', '<p>Interactive algorithms coming in Phase 2.</p>');
         if (action === 'cards') this.showFlashcardsModal();

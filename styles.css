@@ -914,13 +914,63 @@ body.light-theme {
 .radio-card:hover { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.15); }
 .radio-card input:checked + .rc-content strong { color: var(--accent-primary); }
 
+/* Certificate Styling */
+.certificate-wrap {
+  background: white; color: #1e293b; padding: 1.5rem;
+  border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  margin-top: 1rem; position: relative;
+}
+.cert-inner {
+  border: 4px double #cbd5e1; padding: 2rem; border-radius: 8px;
+  background: linear-gradient(to bottom, #ffffff, #f8fafc);
+}
+.cert-header {
+  text-align: center; font-size: 1.5rem; font-family: 'Outfit', serif;
+  font-weight: 800; color: #3b82f6; text-transform: uppercase;
+  letter-spacing: 0.1em; border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 1rem; margin-bottom: 2rem;
+}
+.cert-body { text-align: center; margin-bottom: 3rem; }
+.cert-body p { font-size: 1.1rem; color: #64748b; margin-bottom: 0.5rem; }
+.cert-name {
+  font-size: 2.5rem; font-family: 'Outfit', serif; color: #0f172a;
+  margin: 1rem 0; font-style: italic; border-bottom: 1px solid #cbd5e1;
+  display: inline-block; padding: 0 2rem;
+}
+.cert-course { font-size: 1.5rem; color: #1e293b; margin: 1rem 0; font-weight: 700; }
+.cert-role { font-weight: 600; color: #3b82f6 !important; margin-top: 1rem; }
+
+.cert-footer {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-top: 2rem;
+}
+.cert-sig, .cert-date { text-align: center; width: 30%; }
+.sig-line { border-bottom: 1px solid #94a3b8; height: 30px; margin-bottom: 0.5rem; }
+.cert-sig p, .cert-date p { font-size: 0.9rem; color: #64748b; font-weight: 600; }
+.cert-seal {
+  font-size: 4rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+}
+
 /* Print Styles */
 @media print {
-  .top-nav, .sidebar, .mobile-bar, .unit-footer { display: none; }
-  .learning-area { margin: 0; padding: 0; max-width: 100%; }
+  body { background: white !important; color: black !important; }
+  .top-nav, .sidebar, .mobile-bar, .unit-footer, .modal-header, .no-print, .learning-area { display: none !important; }
+  .modal-overlay { background: white !important; position: absolute !important; inset: 0 !important; }
+  .modal-content {
+    box-shadow: none !important; border: none !important;
+    max-width: 100% !important; margin: 0 !important; width: 100% !important;
+    padding: 0 !important;
+  }
+  .certificate-wrap {
+    box-shadow: none !important; margin: 0 !important; padding: 0 !important;
+    border-radius: 0 !important;
+  }
+  .cert-inner { border: 8px double #cbd5e1 !important; padding: 3rem !important; }
   .tier-section { page-break-inside: avoid; border: 1px solid #ccc; }
   .tier-body { display: block !important; }
   .tier-chevron { display: none; }
-  body { background: white; color: black; }
   h1, h2, h3, h4, p { color: black; }
+  
+  /* Ensure colors print */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
