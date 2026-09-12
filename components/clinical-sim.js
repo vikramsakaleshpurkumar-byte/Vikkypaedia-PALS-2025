@@ -217,7 +217,7 @@ export class ClinicalSimulator {
             </div>
             
             <div style="padding: 1rem; text-align: center; border-top: 1px solid #333;">
-              <button class="sim-btn" style="width: 100%;" onclick="document.querySelector('.sim-overlay').remove()">Exit Simulator</button>
+              <button class="sim-btn sim-exit-btn" style="width: 100%; background: var(--accent-danger);">✕ Exit Simulator</button>
             </div>
           </div>
         </div>
@@ -228,6 +228,15 @@ export class ClinicalSimulator {
       btn.addEventListener('click', (e) => this.handleAction(e.target.dataset.act));
     });
 
+    // Exit button
+    const exitBtn = this.containerEl.querySelector('.sim-exit-btn');
+    if (exitBtn) {
+      exitBtn.addEventListener('click', () => {
+        this.stop();
+        const overlay = this.containerEl.querySelector('.sim-overlay');
+        if (overlay) overlay.remove();
+      });
+    }
     this.updateUI();
   }
 
