@@ -12,7 +12,6 @@
 import { QuizEngine } from './components/quiz-engine.js';
 import { FlashcardEngine } from './components/flashcard-engine.js';
 import { AlgorithmViewer } from './components/algorithm-viewer.js';
-import { QuizEngine } from './components/quiz-engine.js';
 import { ProgressTracker } from './components/progress-tracker.js';
 import { ClinicalSimulator } from './components/clinical-sim.js';
 
