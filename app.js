@@ -709,6 +709,17 @@ class PALSApplication {
             document.getElementById('display-cert-name').textContent = inputName;
             document.getElementById('cert-setup').style.display = 'none';
             document.getElementById('cert-display').style.display = 'block';
+            
+            // Fire Confetti!
+            if (typeof confetti === 'function') {
+              var duration = 3000;
+              var end = Date.now() + duration;
+              (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#3b82f6', '#10b981', '#f59e0b'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#3b82f6', '#10b981', '#f59e0b'] });
+                if (Date.now() < end) { requestAnimationFrame(frame); }
+              }());
+            }
           }
         });
       }

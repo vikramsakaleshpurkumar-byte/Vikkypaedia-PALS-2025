@@ -133,6 +133,14 @@ export class QuizEngine {
       this.render();
     });
 
+    // Fire Confetti if passed
+    if (passed && typeof confetti === 'function') {
+      confetti({
+        particleCount: 100, spread: 70, origin: { y: 0.6 },
+        colors: ['#22c55e', '#3b82f6', '#f59e0b']
+      });
+    }
+
     // Fire onComplete callback
     if (this.options.onComplete) {
       this.options.onComplete(stats);
