@@ -12,8 +12,9 @@
 import { QuizEngine } from './components/quiz-engine.js';
 import { FlashcardEngine } from './components/flashcard-engine.js';
 import { AlgorithmViewer } from './components/algorithm-viewer.js';
-import { ClinicalSimulator } from './components/clinical-sim.js';
+import { QuizEngine } from './components/quiz-engine.js';
 import { ProgressTracker } from './components/progress-tracker.js';
+import { ClinicalSimulator } from './components/clinical-sim.js';
 
 /* ──────────────────────────────────────────
    1. Global Event Bus & State
@@ -633,6 +634,15 @@ class PALSApplication {
     });
   }
 
+  showSimulatorModal() {
+    // We append the simulator directly to body to make it full screen overlay
+    const simDiv = document.createElement('div');
+    document.body.appendChild(simDiv);
+    
+    const sim = new ClinicalSimulator(simDiv);
+    sim.start();
+  }
+
   showCertificateModal() {
     const stats = this.progress.getOverallProgress(window.PALSApp.data.curriculum);
     const isComplete = stats.percentage === 100;
@@ -745,6 +755,7 @@ class PALSApplication {
       btn.addEventListener('click', () => {
         const action = btn.dataset.action;
         if (action === 'settings') this.showSettingsModal();
+        if (action === 'simulator') this.showSimulatorModal();
         if (action === 'certificate') this.showCertificateModal();
         if (action === 'meds') this.showMedsModal();
         if (action === 'algos') this.showModal('🗺️ Algorithms', '<p>Interactive algorithms coming in Phase 2.</p>');
