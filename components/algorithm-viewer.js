@@ -1,82 +1,111 @@
-/**
- * Algorithm Viewer Component
- */
+import { algorithms } from '../data/algorithms.js';
 
 export class AlgorithmViewer {
-    /**
-     * @param {HTMLElement} containerEl 
-     * @param {Object} algorithmData 
-     */
-    constructor(containerEl, algorithmData) {
-        this.containerEl = containerEl;
-        this.algorithmData = algorithmData;
-        this.currentStep = 0;
-    }
+  constructor(containerEl) {
+    this.containerEl = containerEl;
+    this.currentAlgo = algorithms.cardiacArrest; // Default to Cardiac Arrest
+    this.history = []; // Array of node IDs
+    this.currentNodeId = this.currentAlgo.startNode;
+  }
 
-    render() {
-        if (!this.containerEl) return;
-        
-        this.containerEl.innerHTML = `
-            <div class="algorithm-viewer">
-                <h2>${this.algorithmData.title || 'Algorithm'}</h2>
-                <div class="algorithm-canvas" id="algo-canvas">
-                    <!-- Flowchart nodes rendered here -->
-                </div>
-                <div class="algorithm-controls">
-                    <button id="algo-step-btn">Step Through</button>
-                    <button id="algo-reset-btn">Reset</button>
-                </div>
-            </div>
+  start() {
+    this.history = [];
+    this.currentNodeId = this.currentAlgo.startNode;
+    this.render();
+  }
+
+  render() {
+    if (!this.containerEl) return;
+
+    let historyHtml = '';
+    if (this.history.length > 0) {
+      historyHtml = '<div class="algo-history">';
+      this.history.forEach((id, index) => {
+        const node = this.currentAlgo.nodes[id];
+        historyHtml += `
+          <div class="algo-history-node">
+            <span class="step-num">${index + 1}</span>
+            <span class="step-text">${node.text.replace(/\n/g, '<br>')}</span>
+          </div>
+          <div class="algo-arrow">↓</div>
         `;
-
-        this.renderNodes();
-        this.bindEvents();
+      });
+      historyHtml += '</div>';
     }
 
-    renderNodes() {
-        const canvas = this.containerEl.querySelector('#algo-canvas');
-        canvas.innerHTML = '';
+    const currentNode = this.currentAlgo.nodes[this.currentNodeId];
+    
+    let optionsHtml = '';
+    if (currentNode.options && currentNode.options.length > 0) {
+      optionsHtml = '<div class="algo-options">';
+      currentNode.options.forEach(opt => {
+        optionsHtml += `<button class="algo-btn" data-next="${opt.next}">${opt.text}</button>`;
+      });
+      optionsHtml += '</div>';
+    }
+
+    this.containerEl.innerHTML = `
+      <div class="algorithm-viewer">
+        <div class="algo-header">
+          <div class="algo-header-left">
+            <h2>🗺️ Interactive Algorithm</h2>
+            <p class="algo-title">${this.currentAlgo.title}</p>
+          </div>
+          <button class="icon-btn algo-close-btn" aria-label="Close">✕</button>
+        </div>
         
-        if (!this.algorithmData.nodes) return;
+        <div class="algo-body">
+          ${historyHtml}
+          
+          <div class="algo-current-node type-${currentNode.type}">
+            <h3>${currentNode.type === 'decision' ? 'Decision Point' : 'Action Required'}</h3>
+            <div class="node-text">${currentNode.text.replace(/\n/g, '<br>')}</div>
+            ${optionsHtml}
+          </div>
+        </div>
 
-        this.algorithmData.nodes.forEach(node => {
-            const el = document.createElement('div');
-            el.className = `algo-node type-${node.type}`;
-            el.id = `node-${node.id}`;
-            el.innerText = node.text;
-            canvas.appendChild(el);
-        });
-    }
+        <div class="algo-footer">
+          <button class="algo-outline-btn" id="algo-restart">↺ Restart Algorithm</button>
+        </div>
+      </div>
+    `;
 
-    bindEvents() {
-        this.containerEl.querySelector('#algo-step-btn').addEventListener('click', () => this.stepThrough());
-        this.containerEl.querySelector('#algo-reset-btn').addEventListener('click', () => this.reset());
-    }
+    this.bindEvents();
+  }
 
-    stepThrough() {
-        if (!this.algorithmData.nodes || this.algorithmData.nodes.length === 0) return;
-        
-        // Remove highlight from all
-        this.containerEl.querySelectorAll('.algo-node').forEach(el => el.classList.remove('highlighted'));
-        
-        if (this.currentStep < this.algorithmData.nodes.length) {
-            const node = this.algorithmData.nodes[this.currentStep];
-            this.highlightNode(node.id);
-            this.currentStep++;
-        } else {
-            this.currentStep = 0; // Wrap around or end
-        }
-    }
+  bindEvents() {
+    // Option buttons
+    this.containerEl.querySelectorAll('.algo-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const nextId = e.target.dataset.next;
+        this.advance(nextId);
+      });
+    });
 
-    highlightNode(nodeId) {
-        const el = this.containerEl.querySelector(`#node-${nodeId}`);
-        if (el) {
-            el.classList.add('highlighted');
-        }
+    // Restart button
+    const restartBtn = this.containerEl.querySelector('#algo-restart');
+    if (restartBtn) {
+      restartBtn.addEventListener('click', () => this.start());
     }
+    
+    // Close button
+    const closeBtn = this.containerEl.querySelector('.algo-close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.containerEl.remove();
+      });
+    }
+  }
 
-    reset() {
-        this.currentStep = 0;
-        this.containerEl.querySelectorAll('.algo-node').forEach(el => el.classList.remove('highlighted'));
-    }
+  advance(nextId) {
+    this.history.push(this.currentNodeId);
+    this.currentNodeId = nextId;
+    this.render();
+    
+    // Auto-scroll to bottom
+    setTimeout(() => {
+      const body = this.containerEl.querySelector('.algo-body');
+      if (body) body.scrollTop = body.scrollHeight;
+    }, 50);
+  }
 }

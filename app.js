@@ -642,6 +642,15 @@ class PALSApplication {
     sim.start();
   }
 
+  showAlgorithmModal() {
+    const algoDiv = document.createElement('div');
+    algoDiv.className = 'algo-overlay';
+    document.body.appendChild(algoDiv);
+    
+    const algo = new AlgorithmViewer(algoDiv);
+    algo.start();
+  }
+
   showCertificateModal() {
     const stats = this.progress.getOverallProgress(window.PALSApp.data.curriculum);
     const isComplete = stats.percentage === 100;
@@ -757,7 +766,7 @@ class PALSApplication {
         if (action === 'simulator') this.showSimulatorModal();
         if (action === 'certificate') this.showCertificateModal();
         if (action === 'meds') this.showMedsModal();
-        if (action === 'algos') this.showModal('🗺️ Algorithms', '<p>Interactive algorithms coming in Phase 2.</p>');
+        if (action === 'algos') this.showAlgorithmModal();
         if (action === 'cards') this.showFlashcardsModal();
         if (action === 'progress') this.showProgressModal();
         if (action === 'learn') document.getElementById('sidebar')?.classList.toggle('open');
