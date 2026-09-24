@@ -1,0 +1,136 @@
+<script>
+/* ============================================================================
+   Fresh integrative items for the final assessment only.
+   These do NOT appear as unit checkpoints. Each crosses two or more units.
+   ========================================================================= */
+window.EXAM_ITEMS = (function(){
+function I(id, unit, stem, opts, rationale){
+  return { id:id, unit:unit, source:"fresh", stem:stem,
+           opts: opts.map(function(o){ return { html:o[0], correct:!!o[1] }; }),
+           rationale: rationale };
+}
+return [
+
+I("X01", 1, "What is the most common initial rhythm in paediatric in-hospital cardiac arrest?",
+ [["Ventricular fibrillation.", 0], ["Bradycardia progressing to asystole or PEA.", 1], ["Atrial fibrillation.", 0], ["Pulseless ventricular tachycardia.", 0]],
+ "<h6>Why</h6><p>Children usually arrest after hypoxia or shock, so the first rhythm is usually bradycardia leading to asystole or PEA. Shockable rhythms are less common. (Units 1, 12)</p>"),
+
+I("X02", 2, "What is the hypotension threshold (systolic) for a 3-month-old infant?",
+ [["Below 60 mmHg.", 0], ["Below 70 mmHg.", 1], ["Below 76 mmHg.", 0], ["Below 90 mmHg.", 0]],
+ "<h6>Why</h6><p>For infants 1–12 months, hypotension is a systolic pressure below 70 mmHg; below 60 mmHg applies to term neonates. (Units 2, 9)</p>"),
+
+I("X03", 3, "At each 2-minute rhythm check, what should the team leader do?",
+ [["Take over compressions.", 0], ["Summarise events, state the rhythm, confirm the next actions and invite input.", 1], ["Leave the room to call the family.", 0], ["Start a new IV line.", 0]],
+ "<h6>Why</h6><p>Regular summaries keep a shared mental model and catch errors. The leader stays hands-off. (Units 3, 13)</p>"),
+
+I("X04", 4, "What is the correct compression depth for a 6-month-old infant?",
+ [["About 1 cm.", 0], ["At least one-third of chest depth, about 4 cm.", 1], ["About 6 cm.", 0], ["Half of chest depth.", 0]],
+ "<h6>Why</h6><p>Compress at least one-third of the anterior–posterior chest diameter: about 4 cm in infants and 5 cm in children. (Unit 4)</p>"),
+
+I("X05", 4, "During CPR, the defibrillator needs to charge. What should the compressor do?",
+ [["Stop and wait for the charge.", 0], ["Continue compressions until just before the shock is delivered.", 1], ["Check a pulse.", 0], ["Give two rescue breaths.", 0]],
+ "<h6>Why</h6><p>Charging during compressions minimises the pre-shock pause, which improves the chance of successful defibrillation. (Units 4, 5, 14)</p>"),
+
+I("X06", 5, "A 6-year-old is choking. He cannot speak or cough. What does the 2025 guidance recommend?",
+ [["Only abdominal thrusts.", 0], ["Repeated cycles of 5 back blows and 5 abdominal thrusts.", 1], ["Blind finger sweeps.", 0], ["Chest compressions while he is conscious.", 0]],
+ "<h6>Why</h6><p>2025 AHA/AAP: for children, alternate 5 back blows with 5 abdominal thrusts; for infants, back blows with chest thrusts. Start CPR if he becomes unresponsive. (Unit 5)</p>"),
+
+I("X07", 5, "Only an adult AED without paediatric pads is available for a 3-year-old in VF. What should you do?",
+ [["Do not use it.", 0], ["Use it with the adult pads, placed front and back if they would otherwise touch.", 1], ["Wait for a manual defibrillator.", 0], ["Use it only after 10 minutes of CPR.", 0]],
+ "<h6>Why</h6><p>A shock with adult pads is better than no shock. Place pads so that they do not touch, front and back if needed. (Units 5, 14)</p>"),
+
+I("X08", 6, "Waveform capnography after intubation during CPR shows no ETCO₂. What is the first action?",
+ [["Assume very low cardiac output and continue.", 0], ["Re-check tube placement by direct view and examination; if in doubt, remove it and bag-mask ventilate.", 1], ["Increase the ventilation rate.", 0], ["Give bicarbonate.", 0]],
+ "<h6>Why</h6><p>Absent ETCO₂ can mean very low flow, but oesophageal intubation must be excluded first. When in doubt, take it out. (Units 6, 15)</p>"),
+
+I("X09", 6, "Why is hyperventilation during CPR harmful?",
+ [["It causes hypoxia.", 0], ["It raises intrathoracic pressure, reduces venous return and lowers coronary perfusion.", 1], ["It causes hyperkalaemia.", 0], ["It is not harmful.", 0]],
+ "<h6>Why</h6><p>Excessive rate and volume reduce venous return and coronary perfusion pressure. (Units 4, 6)</p>"),
+
+I("X10", 7, "What is the maximum single dose of epinephrine in paediatric cardiac arrest?",
+ [["0.1 mg.", 0], ["0.5 mg.", 0], ["1 mg.", 1], ["5 mg.", 0]],
+ "<h6>Why</h6><p>Epinephrine is 0.01 mg/kg IV/IO, to a maximum of 1 mg per dose. (Units 7, 13)</p>"),
+
+I("X11", 7, "Which statement about intraosseous access in arrest is correct?",
+ [["It can only be used for fluids, not drugs.", 0], ["All resuscitation drugs and fluids can be given IO.", 1], ["It should be tried only after 10 IV attempts.", 0], ["It is contraindicated in infants.", 0]],
+ "<h6>Why</h6><p>IO access is fast and everything given IV can be given IO. Use it early when IV access is not quickly obtained. (Units 7, 13)</p>"),
+
+I("X12", 8, "Which is a sign of respiratory failure rather than distress?",
+ [["Nasal flaring in an alert child.", 0], ["Drowsiness with falling respiratory effort.", 1], ["Tachypnoea with good air entry.", 0], ["Audible wheeze in an interactive child.", 0]],
+ "<h6>Why</h6><p>Falling consciousness and falling effort signal exhaustion and failure; the child needs assisted ventilation. (Units 8, 1)</p>"),
+
+I("X13", 9, "A child with septic shock is in a district hospital without intensive care. His blood pressure is normal for age. What does the 2026 Surviving Sepsis Campaign guideline recommend about fluid boluses?",
+ [["Give 60 mL/kg in the first hour.", 0], ["Do not give fluid boluses; give maintenance fluid and treat the infection.", 1], ["Give 20 mL/kg every 5 minutes until the heart rate is normal.", 0], ["Give colloid only.", 0]],
+ "<h6>Why</h6><p>Without intensive care, SSC 2026 advises no bolus in sepsis without hypotension, based in part on FEAST. See the Approach to the Sick Child module. (Unit 9)</p>"),
+
+I("X14", 10, "What is the first treatment for bradycardia with poor perfusion in a hypoxic infant?",
+ [["Atropine.", 0], ["Oxygenation and ventilation.", 1], ["Adenosine.", 0], ["Transcutaneous pacing.", 0]],
+ "<h6>Why</h6><p>Hypoxia is the commonest cause; ventilation with oxygen usually restores the heart rate. CPR starts if HR stays below 60 with poor perfusion. (Units 8, 10)</p>"),
+
+I("X15", 11, "What is the adenosine dose for the first attempt in SVT?",
+ [["0.01 mg/kg.", 0], ["0.1 mg/kg rapid push (max 6 mg).", 1], ["1 mg/kg.", 0], ["0.5 mg/kg slowly over 10 minutes.", 0]],
+ "<h6>Why</h6><p>Adenosine 0.1 mg/kg (max 6 mg) by rapid push with an immediate flush; 0.2 mg/kg (max 12 mg) for the second dose. (Units 7, 11)</p>"),
+
+I("X16", 11, "What is new in the 2025 guidelines about refractory SVT?",
+ [["Verapamil is first-line in infants.", 0], ["IV sotalol may be considered when vagal manoeuvres, adenosine and cardioversion fail and expert consultation is not available.", 1], ["Adenosine is no longer used.", 0], ["Defibrillation replaces cardioversion.", 0]],
+ "<h6>Why</h6><p>2025 AHA/AAP added IV sotalol as an option for SVT with cardiopulmonary compromise unresponsive to standard treatment. Verapamil is dangerous in infants. (Unit 11)</p>"),
+
+I("X17", 11, "What energy is used for the first synchronised cardioversion in unstable SVT?",
+ [["0.5–1 J/kg.", 1], ["4 J/kg.", 0], ["10 J/kg.", 0], ["200 J regardless of weight.", 0]],
+ "<h6>Why</h6><p>Synchronised cardioversion starts at 0.5–1 J/kg and increases to 2 J/kg if ineffective. (Units 11, 5)</p>"),
+
+I("X18", 12, "Which child is most likely to have VF as the initial arrest rhythm?",
+ [["An infant with bronchiolitis.", 0], ["A teenager who collapses suddenly while playing sport.", 1], ["A toddler with diarrhoea and dehydration.", 0], ["A child with severe pneumonia.", 0]],
+ "<h6>Why</h6><p>Sudden witnessed collapse, especially during exercise or with heart disease, makes a shockable rhythm more likely. (Units 12, 14)</p>"),
+
+I("X19", 13, "In nonshockable arrest, how often should epinephrine be repeated?",
+ [["Every minute.", 0], ["Every 3–5 minutes.", 1], ["Every 10 minutes.", 0], ["Once only.", 0]],
+ "<h6>Why</h6><p>After the first early dose, epinephrine is repeated every 3–5 minutes until ROSC. (Units 13, 7)</p>"),
+
+I("X20", 14, "What is the maximum energy for subsequent defibrillation in a child?",
+ [["2 J/kg.", 0], ["4 J/kg.", 0], ["10 J/kg or the adult maximum dose.", 1], ["20 J/kg.", 0]],
+ "<h6>Why</h6><p>After the second shock at 4 J/kg, later shocks may be increased up to 10 J/kg or the adult dose. (Units 5, 14)</p>"),
+
+I("X21", 14, "Why are single shocks recommended over stacked shocks?",
+ [["Stacked shocks are more effective.", 0], ["Single shocks allow immediate resumption of compressions and less interruption.", 1], ["Stacked shocks are only for infants.", 0], ["Single shocks use less battery.", 0]],
+ "<h6>Why</h6><p>Resuming compressions immediately after one shock minimises no-flow time. (Units 4, 14)</p>"),
+
+I("X22", 15, "What diastolic blood pressure target during CPR does the 2025 guideline give for an infant with an arterial line?",
+ [["≥10 mmHg.", 0], ["≥25 mmHg.", 1], ["≥40 mmHg.", 0], ["≥60 mmHg.", 0]],
+ "<h6>Why</h6><p>2025 AHA/AAP: diastolic pressure ≥25 mmHg in infants and ≥30 mmHg in children 1 year and older. (Unit 15)</p>"),
+
+I("X23", 15, "Which is one of the 'T' reversible causes of arrest?",
+ [["Tachypnoea.", 0], ["Tamponade.", 1], ["Tachycardia.", 0], ["Temperature above 37 °C.", 0]],
+ "<h6>Why</h6><p>The T's are tension pneumothorax, tamponade, toxins and thrombosis. (Units 13, 15)</p>"),
+
+I("X24", 16, "A child is pulled from a pond, unresponsive and not breathing, with a pulse. What is the priority?",
+ [["Abdominal thrusts to remove water.", 0], ["Open the airway and give rescue breaths.", 1], ["Defibrillation.", 0], ["Log-roll and wait for a spinal board before any breaths.", 0]],
+ "<h6>Why</h6><p>Drowning causes hypoxic arrest; ventilation comes first. Abdominal thrusts do not help and delay breaths. Spinal precautions only if injury is likely, without delaying ventilation. (Units 16, 8)</p>"),
+
+I("X25", 16, "A child in anaphylaxis with stridor and hypotension still has a pulse. What is the first drug?",
+ [["IV chlorphenamine.", 0], ["IM epinephrine 0.01 mg/kg (max 0.5 mg).", 1], ["Oral prednisolone.", 0], ["Nebulised salbutamol only.", 0]],
+ "<h6>Why</h6><p>IM epinephrine in the anterolateral thigh is the first and most important treatment; repeat after 5 minutes if needed. (Units 16, 9)</p>"),
+
+I("X26", 17, "Which central temperature does the 2025 guideline advise avoiding after paediatric cardiac arrest?",
+ [["Below 36 °C.", 0], ["Above 37.5 °C.", 1], ["Above 39 °C only.", 0], ["Any temperature below 38 °C.", 0]],
+ "<h6>Why</h6><p>Avoiding central temperatures above 37.5 °C improves neurological outcome. Either 32–34 °C then 36–37.5 °C, or 36–37.5 °C throughout, is acceptable in comatose children. (Unit 17)</p>"),
+
+I("X27", 17, "After ROSC, what blood pressure target does the 2025 guideline recommend?",
+ [["Systolic above 50 mmHg.", 0], ["Systolic and mean arterial pressure above the 10th percentile for age.", 1], ["Mean arterial pressure above 100 mmHg.", 0], ["No specific target.", 0]],
+ "<h6>Why</h6><p>Hypotension after arrest is associated with worse outcome; maintain systolic and mean pressures above the 10th percentile for age. (Units 17, 9)</p>"),
+
+I("X28", 18, "Which statement about neuroprognostication after paediatric arrest is correct?",
+ [["A single fixed pupil at 1 hour predicts death.", 0], ["Multiple modalities should be assessed at several time points.", 1], ["EEG has no role.", 0], ["Prognosis should be decided within 6 hours.", 0]],
+ "<h6>Why</h6><p>The 2025 guidelines, which address prognostication for the first time, require multimodal assessment over time; no single test is enough. (Unit 18)</p>"),
+
+I("X29", 19, "Which factor alone should NOT be used to stop resuscitation in a child?",
+ [["A specific ETCO₂ value.", 1], ["The duration of arrest together with cause and response.", 0], ["Team discussion.", 0], ["Whether reversible causes have been treated.", 0]],
+ "<h6>Why</h6><p>The 2025 guideline advises against using a specific ETCO₂ cut-off alone to terminate resuscitation. The decision integrates several factors. (Units 15, 19)</p>"),
+
+I("X30", 20, "A 10 kg child is in VF. Which sequence is correct for the first two shocks?",
+ [["10 J, then 20 J.", 0], ["20 J, then 40 J.", 1], ["40 J, then 100 J.", 0], ["50 J, then 50 J.", 0]],
+ "<h6>Why</h6><p>First shock 2 J/kg (20 J), second 4 J/kg (40 J). Epinephrine follows the second shock. (Units 5, 14, 20)</p>")
+
+];
+})();
+</script>

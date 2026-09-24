@@ -1,0 +1,51 @@
+<script>
+/* Module configuration — the only engine-facing file that changes between Vikkypaedia modules. */
+window.VKP_MODULE = {
+  id: "pals2025",
+  slug: "pals2025",
+  title: "Paediatric Advanced Life Support 2025",
+  version: "4.0.0",
+  build: "2026-09-24",
+  storeKey: "vkp.pals2025.v4",
+  legacyKeys: ["pals-mooc-progress", "pals-profile", "pals-user-name"],
+  codePrefix: "PA26",
+  safetyGate: false,
+  parts: [
+    { key:"A", units:[1,2,3] },
+    { key:"B", units:[4,5,6,7] },
+    { key:"C", units:[8,9,10,11] },
+    { key:"D", units:[12,13,14,15,16] },
+    { key:"E", units:[17,18,19,20] }
+  ],
+  defaults: {
+    cut: 80,            // per cent — PROVISIONAL, set by faculty using Appendix C before consequential use
+    items: 50,
+    minutes: 75,
+    attempts: 2,
+    lockHours: 24,
+    retainUnits: 15     // of 20 units must show ≥24 h retention (75%)
+  },
+  alignedTo: "aligned to the 2025 AHA/AAP Guidelines for Cardiopulmonary Resuscitation and Emergency Cardiovascular Care (Parts 6 and 8) and ILCOR 2025",
+  certScopeLines: [
+    "This certificate attests knowledge and clinical reasoning demonstrated by written assessment in a self-paced module. It does not attest bedside",
+    "competence in CPR, defibrillation, airway management or resuscitation leadership, confers no licence or clinical privilege, and is not a substitute",
+    "for a hands-on, instructor-led course. It is not the AHA PALS course, confers no PALS provider status and is not endorsed by the AHA or AAP.",
+    "No CME credit unless separately accredited. The verification code is deterministically re-derivable from the displayed figures — it is not tamper-proof."
+  ],
+  recordNote: "Not the AHA PALS course. Confers no PALS provider status, procedural competence, licence or clinical privilege.",
+  scopes: {
+    e: { label:"Parts A–B · 7 units", hours:9 },
+    a: { label:"Parts A–D · 16 units", hours:22 },
+    x: { label:"All 20 units + appendices", hours:28 }
+  },
+  placement: {
+    paths: {
+      many: "You run resuscitations routinely, so <b>clear Parts A and B by challenge</b>: open each unit, go straight to the two checkpoint questions and answer them cold. Pass both and the unit is mastered; miss one and read the unit &mdash; that miss is the gap worth finding.",
+      some: "Read Part A quickly, then slow down in <b>Part D</b>. The 2025 changes &mdash; epinephrine as early as possible in nonshockable arrest, defibrillation first in shockable arrest, diastolic pressure targets &mdash; are where partly-experienced teams most often carry an old habit.",
+      none: "Work through in order and do not rush Part B. High-quality CPR is the foundation everything else stands on. Aim for <b>one unit per sitting</b>, and book a hands-on course for the skills."
+    },
+    trackRc: "Your clinical panels now default to the <b>resource-constrained track</b> &mdash; one doctor and two nurses, a manual defibrillator or an AED, no arterial line, transfer by road. Switch to &lsquo;Both tracks&rsquo; whenever you want to compare with a PICU.",
+    trackIdeal: "Your clinical panels default to the <b>ideal-setting track</b>. Read the resource-constrained panels at least once: you will refer to, receive from or teach in those settings."
+  }
+};
+</script>

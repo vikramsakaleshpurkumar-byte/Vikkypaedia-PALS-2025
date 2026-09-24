@@ -1,0 +1,35 @@
+<script>
+/* ------------------------------------------------------------------
+   Figure specs. Rendered to inline SVG by figSVG() in the engine.
+   Kinds: band | ask | step | good | warn | crit | note
+   A node with side:1 hangs off node `from` in the right column.
+   `edge` labels the arrow that arrives at the node.
+   ------------------------------------------------------------------ */
+var FIGS = {
+
+"arrest": {
+  w: 780, main: 450, side: 290,
+  nodes: [
+    {id:"start", k:"band", t:"NO PULSE · START CPR", l:["15:2 (two rescuers) · oxygen · attach monitor/defibrillator"]},
+    {id:"q", k:"ask", t:"Rhythm shockable?", l:["Check in under 10 seconds"]},
+    {id:"shock", k:"crit", side:1, from:"q", t:"YES · VF / pulseless VT", l:["Shock 2 J/kg → CPR 2 min","Shock 4 J/kg → CPR 2 min","Epinephrine after the 2nd shock","Amiodarone 5 mg/kg or lidocaine 1 mg/kg"]},
+    {id:"epi", k:"warn", edge:"NO", t:"Asystole / PEA", l:["Epinephrine 0.01 mg/kg AS SOON AS POSSIBLE","Then every 3–5 minutes"]},
+    {id:"cpr", k:"step", t:"CPR 2 minutes", l:["IV/IO access · consider advanced airway","Treat reversible causes (H's and T's)"]},
+    {id:"rosc", k:"good", t:"ROSC → post-arrest care", l:["Temperature ≤37.5 °C · BP >10th centile","SpO₂ 94–99% · normal PaCO₂ · treat seizures"]}
+  ]
+},
+
+"brady": {
+  w: 780, main: 450, side: 290,
+  nodes: [
+    {id:"b1", k:"band", t:"BRADYCARDIA WITH A PULSE AND POOR PERFUSION"},
+    {id:"b2", k:"step", t:"Support ABC first", l:["Open airway · OXYGEN · VENTILATE with bag-mask","Monitor · IV/IO access · 12-lead ECG"]},
+    {id:"b3", k:"ask", t:"HR < 60/min with poor perfusion despite ventilation?"},
+    {id:"b4", k:"note", side:1, from:"b3", t:"NO", l:["Keep supporting ABC","Observe · expert consultation"]},
+    {id:"b5", k:"crit", edge:"YES", t:"Start CPR", l:["Epinephrine 0.01 mg/kg IV/IO every 3–5 min"]},
+    {id:"b6", k:"warn", t:"Specific causes", l:["Atropine 0.02 mg/kg for vagal tone or AV block","Pacing for complete heart block · treat causes"]}
+  ]
+}
+
+};
+</script>

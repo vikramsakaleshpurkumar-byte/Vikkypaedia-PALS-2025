@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Read back a Vikkypaedia completion record and check its figures have not been altered in transit. Works offline.">
+<title>Completion record reader &middot; Vikkypaedia</title>
+<style>
+:root{
+  --paper:#f4f6f8;--surface:#fff;--surface-2:#f2f5f8;--surface-3:#e3e9ef;
+  --ink:#0b1220;--ink-2:#3d4859;--ink-3:#5b6778;--line:#e2e8ef;--line-2:#cdd7e2;
+  --brand:#0d7a70;--brand-600:#0a6259;--brand-ink:#064e46;--brand-soft:#e2f3f0;
+  --green:#1c6b39;--green-soft:#e2f3e8;--red:#a8271f;--red-soft:#fbe9e7;
+  --amber:#9a5b09;--amber-soft:#fbf0dc;--btn-ink:#fff;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --r:12px;--r-lg:16px;
+  --sh:0 1px 2px rgba(11,18,32,.04),0 6px 18px -6px rgba(11,18,32,.10);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0a0d12;--surface:#141a22;--surface-2:#1b222c;--surface-3:#26303c;
+  --ink:#e9edf2;--ink-2:#b3bdca;--ink-3:#8492a3;--line:#242d39;--line-2:#36414f;
+  --brand:#4fd0c2;--brand-600:#6bdccf;--brand-ink:#a5e9e0;--brand-soft:#0e2f2c;
+  --green:#63c98a;--green-soft:#12301e;--red:#f08a80;--red-soft:#3a1a17;
+  --amber:#e3ab5a;--amber-soft:#33260f;--btn-ink:#04211e;
+  --sh:0 1px 2px rgba(0,0,0,.45),0 8px 22px -8px rgba(0,0,0,.55);
+}}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:clamp(1.5rem,4.5vw,2.1rem);letter-spacing:-.03em;margin:.1em 0 .3em;font-weight:800}
+h2{font-size:1.05rem;letter-spacing:-.02em;margin:0 0 .6em}
+p{margin:0 0 .9em}
+.kicker{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--brand);font-weight:800}
+.lede{color:var(--ink-2);max-width:62ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;margin:18px 0;box-shadow:var(--sh)}
+textarea{
+  width:100%;min-height:190px;padding:.8em .9em;border-radius:var(--r);border:1px solid var(--line-2);
+  background:var(--surface-2);color:var(--ink);font-family:var(--mono);font-size:.82rem;line-height:1.5;resize:vertical;
+}
+textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(13,122,112,.18)}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:.9em;align-items:center}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.45em;min-height:44px;
+  background-color:var(--brand);background-image:linear-gradient(160deg,var(--brand),var(--brand-600));
+  color:var(--btn-ink);border:1px solid transparent;border-radius:10px;padding:.62em 1.15em;
+  font-size:.92rem;font-weight:650;cursor:pointer;
+}
+.btn:hover{filter:brightness(1.06)}
+.btn.ghost{background-image:none;background-color:var(--surface);color:var(--ink);border-color:var(--line-2)}
+.verdict{border-radius:var(--r);padding:.85em 1em;margin:0 0 1.1em;font-weight:650;border:1px solid}
+.v-ok{background:var(--green-soft);border-color:var(--green);color:var(--green)}
+.v-bad{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+.v-warn{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:.55em .2em;border-bottom:1px solid var(--line);vertical-align:top}
+th{width:40%;color:var(--ink-3);font-weight:650;font-size:.86rem}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+code{font-family:var(--mono);font-size:.88em;background:var(--surface-2);padding:.12em .4em;border-radius:5px;border:1px solid var(--line)}
+.note{background:var(--surface-2);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:var(--r);padding:.85em 1em;font-size:.88rem;color:var(--ink-2)}
+.note b{color:var(--ink)}
+footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);color:var(--ink-3);font-size:.82rem}
+a{color:var(--brand)}
+[hidden]{display:none!important}
+.drop{border:2px dashed var(--line-2);border-radius:var(--r);padding:.9em;text-align:center;color:var(--ink-3);font-size:.86rem;margin-top:.9em}
+.drop.over{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker">Vikkypaedia &middot; Paediatric Advanced Life Support 2025</p>
+  <h1>Completion record reader</h1>
+  <p class="lede">Paste or drop a learner&rsquo;s <code>.json</code> completion record below. This page reads it back in plain language and recomputes its checksum, so you can see whether the figures still match the ones the module generated.</p>
+
+  <div class="card">
+    <h2>The record</h2>
+    <label for="src" style="font-size:.8rem;color:var(--ink-3);font-weight:650">Paste the file contents</label>
+    <textarea id="src" placeholder='{ "format": "vikkypaedia-completion-record", ... }' spellcheck="false"></textarea>
+    <div class="drop" id="drop">&hellip; or drop the <code>.json</code> file here</div>
+    <div class="row">
+      <button class="btn" id="go">Read the record</button>
+      <button class="btn ghost" id="clear">Clear</button>
+    </div>
+  </div>
+
+  <div class="card" id="out" hidden>
+    <div class="verdict" id="verdict"></div>
+    <h2>What it says</h2>
+    <table><tbody id="rows"></tbody></table>
+    <p class="note" style="margin-top:1.2em"><b>Read this before you rely on it.</b> A completion record is <b>self-attested</b>. It is produced on the learner&rsquo;s own device from data held in their browser, and the checksum is a plain hash computed by code that ships inside the module &mdash; anyone with the file can recompute it. So a matching checksum tells you the record has not been <i>casually</i> altered, mistyped or truncated in transit. It does <b>not</b> prove the learner sat the assessment, and it is not evidence issued by a third party. If you need records you can rely on for promotion, credentialling or audit, you need a server-side system with authenticated sign-in, not this.</p>
+  </div>
+
+  <footer>
+    <p><b>Vikkypaedia</b> &middot; Dr Vikram Sakaleshpur Kumar, Medical Educator. This page works offline and sends nothing anywhere &mdash; the record you paste never leaves your device.</p>
+    <p>Reads completion records from any Vikkypaedia module built on the Standard engine.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  function $(s){ return document.querySelector(s); }
+  function fnv(str){
+    var h = 2166136261;
+    for (var i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    var s = (h >>> 0).toString(36).toUpperCase();
+    while (s.length < 7) s = "0" + s;
+    return s;
+  }
+  function basis(r){
+    return ["vkp-cr1", r.module.id, r.module.version, r.learner.name, r.learner.institution,
+            r.enrolledAt, r.issuedAt, r.result.unitsMastered, r.result.checkpointsCorrect,
+            r.result.retentionUnits, r.result.bestScore, r.result.cutScore,
+            r.result.certified ? 1 : 0, r.verificationCode].join("|");
+  }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function d(ms){ if(!ms) return "—"; try{ return new Date(ms).toLocaleString(); }catch(e){ return String(ms); } }
+
+  function show(kind, msg){
+    var v = $("#verdict");
+    v.className = "verdict " + kind;
+    v.textContent = msg;
+    $("#out").hidden = false;
+  }
+
+  function read(){
+    var raw = $("#src").value.trim();
+    $("#rows").innerHTML = "";
+    if (!raw){ show("v-warn", "Nothing pasted yet."); return; }
+    var r;
+    try { r = JSON.parse(raw); }
+    catch(e){ show("v-bad", "That is not valid JSON — the file may have been truncated or altered when it was copied. (" + e.message + ")"); return; }
+    if (!r || r.format !== "vikkypaedia-completion-record"){
+      show("v-bad", "This is valid JSON but not a Vikkypaedia completion record."); return;
+    }
+    var expected;
+    try { expected = fnv(basis(r)); }
+    catch(e){ show("v-bad", "The record is missing fields the checksum is built from, so it cannot be checked."); return; }
+
+    var ok = (expected === r.checksum);
+    var cert = r.result && r.result.certified;
+    if (!ok){
+      show("v-bad", "Checksum does NOT match. Expected " + expected + ", the file says " + (r.checksum || "nothing") + ". The figures in this record have been changed since it was generated.");
+    } else if (cert){
+      show("v-ok", "Checksum matches. The record is internally consistent and reports all three criteria met.");
+    } else {
+      show("v-warn", "Checksum matches, but this learner has NOT met all three criteria — it is a progress record, not a completion.");
+    }
+
+    var rows = [
+      ["Name", r.learner.name || "—"],
+      ["Institution", r.learner.institution || "—"],
+      ["Registration / employee no.", r.learner.registration || "—"],
+      ["Email", r.learner.email || "—"],
+      ["Track", (r.learner.track || "—") + (r.learner.setting ? " · " + r.learner.setting + " setting" : "")],
+      ["Module", (r.module.title || "") + " · v" + (r.module.version || "?") + " (build " + (r.module.build || "?") + ")"],
+      ["Enrolled", d(r.enrolledAt)],
+      ["Record issued", d(r.issuedAt)],
+      ["1 · Coverage", r.result.checkpointsCorrect + " of " + r.result.checkpointsTotal + " checkpoint items correct"],
+      ["2 · Retention", r.result.retentionUnits + " of " + r.result.unitsTotal + " units retained (" + r.result.retentionRequired + " required) · longest " + (r.result.longestRetention || "—")],
+      ["3 · Applied", (r.result.attempts ? r.result.bestScore + "% best of " + r.result.attempts + " attempt(s)" : "not attempted") + " · cut score " + r.result.cutScore + "%"],
+      ["Units mastered", r.result.unitsMastered + " of " + r.result.unitsTotal],
+      ["All three criteria met", cert ? "Yes" : "No"],
+      ["Signatory", (r.signatory && r.signatory.name ? r.signatory.name + (r.signatory.role ? " · " + r.signatory.role : "") : "— (module was distributed unconfigured)")],
+      ["Verification code", "<code>" + esc(r.verificationCode || "—") + "</code>"],
+      ["Checksum", "<code>" + esc(r.checksum || "—") + "</code> — recomputed <code>" + esc(expected) + "</code>"]
+    ];
+    $("#rows").innerHTML = rows.map(function(x){
+      return "<tr><th>" + esc(x[0]) + "</th><td>" + (/^<code>/.test(x[1]) ? x[1] : esc(x[1])) + "</td></tr>";
+    }).join("");
+  }
+
+  $("#go").addEventListener("click", read);
+  $("#clear").addEventListener("click", function(){
+    $("#src").value = ""; $("#out").hidden = true; $("#src").focus();
+  });
+
+  var drop = $("#drop");
+  ["dragenter","dragover"].forEach(function(t){
+    drop.addEventListener(t, function(e){ e.preventDefault(); drop.classList.add("over"); });
+  });
+  ["dragleave","drop"].forEach(function(t){
+    drop.addEventListener(t, function(e){ e.preventDefault(); drop.classList.remove("over"); });
+  });
+  drop.addEventListener("drop", function(e){
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f) return;
+    var fr = new FileReader();
+    fr.onload = function(){ $("#src").value = fr.result; read(); };
+    fr.readAsText(f);
+  });
+})();
+</script>
+</body>
+</html>

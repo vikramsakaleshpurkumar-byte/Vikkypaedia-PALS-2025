@@ -1,0 +1,385 @@
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- sticky topbar -->
+<div class="topbar noprint">
+  <div class="topbar-in">
+    <button class="iconbtn" id="drawerOpen" aria-label="Open contents" aria-expanded="false"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
+    <span class="tb-mark" aria-hidden="true">PA</span>
+    <span class="nb-title">Paediatric Advanced Life Support 2025</span>
+    <span class="tb-right">
+      <span class="tb-pct" id="tbPct">0% mastered</span>
+      <button class="duebtn" id="dueBtn" type="button" hidden title="Spaced-retrieval items due now"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/></svg><b id="dueCount">0</b><span class="dl"> due</span></button>
+      <button class="iconbtn" id="searchBtn" aria-label="Search the module" title="Search — Ctrl K or /"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5 L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <button class="iconbtn" id="themeBtnM" aria-label="Change theme" title="Light / dark / system"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 0 0 18Z" fill="currentColor"/></svg></button>
+    </span>
+  </div>
+  <div class="topline"><i></i></div>
+</div>
+
+<!-- first-run onboarding -->
+<div class="onb noprint" id="onb" role="dialog" aria-modal="true" aria-labelledby="onbTitle" hidden>
+  <div class="onb-panel">
+    <div class="onb-head">
+      <div class="onb-dots" id="onbDots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <button type="button" class="onb-skip" id="onbSkip">Skip for now</button>
+    </div>
+
+    <div class="onb-body">
+
+      <section class="onb-step" data-step="1" hidden>
+        <p class="onb-kicker">Vikkypaedia &middot; Paediatric Advanced Life Support 2025</p>
+        <h2 id="onbTitle">Before you start</h2>
+        <p>Four short steps. It takes about a minute, and it decides how the next twenty-eight hours are shaped for you.</p>
+        <ul class="onb-list">
+          <li><span class="n">1</span><div><b>Mastery, not completion.</b> There is no &ldquo;mark as read&rdquo; button anywhere. A unit is mastered when both its checkpoint questions are currently correct &mdash; and it can be lost again.</div></li>
+          <li><span class="n">2</span><div><b>Parts unlock in order.</b> Part&nbsp;B opens when every unit in Part&nbsp;A is mastered. Part&nbsp;A is open now.</div></li>
+          <li><span class="n">3</span><div><b>Hints before answers.</b> Stuck? Take a nudge, then a structured hint. Using one still counts &mdash; the item simply comes back sooner.</div></li>
+          <li><span class="n">4</span><div><b>Spaced retrieval.</b> Passed items return at 1, 3, 7, 21 and 60 days. That is what turns a pass into knowledge you still have at 3&nbsp;a.m.</div></li>
+        </ul>
+        <div class="onb-note"><b>Clinical safety.</b> This is education, not a protocol and not certification to practise. It is an original work written from the 2025 AHA/AAP guidelines. It is <b>not the AHA PALS course</b> and gives no provider card. CPR, defibrillation and airway skills need a hands-on, instructor-led course. Verify every dose against your institution&rsquo;s protocol. The drug annex and references are never locked.</div>
+      </section>
+
+      <section class="onb-step" data-step="2" hidden>
+        <p class="onb-kicker">Step 2 of 4</p>
+        <h2>Who is taking this?</h2>
+        <p>Used to personalise your certificate and your completion record. It stays in this browser.</p>
+        <div class="fset">
+          <div>
+            <label for="enName">Full name, as you want it printed</label>
+            <input type="text" id="enName" placeholder="e.g. Dr Ananya Raghavan" autocomplete="name">
+          </div>
+          <div>
+            <label for="enInst">Institution or hospital <span style="font-weight:400;color:var(--ink-3)">(optional)</span></label>
+            <input type="text" id="enInst" placeholder="e.g. District Hospital, Hassan" autocomplete="organization">
+          </div>
+          <div>
+            <label for="enReg">Registration or employee number <span style="font-weight:400;color:var(--ink-3)">(optional)</span></label>
+            <input type="text" id="enReg" placeholder="e.g. KMC 123456">
+          </div>
+          <div>
+            <label for="enEmail">Email <span style="font-weight:400;color:var(--ink-3)">(optional)</span></label>
+            <input type="email" id="enEmail" placeholder="you@example.com" autocomplete="email">
+          </div>
+        </div>
+        <p class="onb-note" id="enPassport" hidden><b>Filled from your Vikkypaedia Passport.</b> You enrolled in another Vikkypaedia module in this browser. Check the details, then continue.</p>
+        <p class="onb-note" id="enErr" hidden style="border-color:var(--red);color:var(--red);background:var(--red-soft)"></p>
+        <div class="onb-note"><b>Nothing leaves this device.</b> There is no account and no server: these details are written to this browser&rsquo;s local storage only, so they can be printed on your certificate and included in a completion record you choose to export and send. Nothing is transmitted, and you can erase all of it with one click at the bottom of the final assessment. The Digital Personal Data Protection Act 2023 is satisfied here by collecting nothing centrally at all.</div>
+      </section>
+
+      <section class="onb-step" data-step="3" hidden>
+        <p class="onb-kicker">Step 3 of 4</p>
+<section class="card noprint" id="placementCard" aria-labelledby="placeH">
+      <h2 id="placeH">Where should I start?</h2>
+      <p class="dash-status">Three questions. This sets your default depth and clinical track. It never unlocks Parts for you &mdash; everyone demonstrates mastery, experienced clinicians simply do it faster by answering checkpoints cold.</p>
+
+      <div class="place-q" data-pq="role">
+        <p>1. What is your role?</p>
+        <div class="place-opts">
+          <button type="button" data-v="e" aria-pressed="false">MBBS student, intern or nurse</button>
+          <button type="button" data-v="a" aria-pressed="false">MBBS doctor or PG resident (MD/DNB)</button>
+          <button type="button" data-v="x" aria-pressed="false">Paediatrician, intensivist or faculty</button>
+        </div>
+      </div>
+
+      <div class="place-q" data-pq="setting">
+        <p>2. Where do you resuscitate children?</p>
+        <div class="place-opts">
+          <button type="button" data-v="ideal" aria-pressed="false">Hospital with a PICU, arterial lines, capnography and a paediatric team</button>
+          <button type="button" data-v="rc" aria-pressed="false">District hospital or CHC &mdash; one doctor, an AED or manual defibrillator, no PICU</button>
+          <button type="button" data-v="both" aria-pressed="false">Both / I teach across settings</button>
+        </div>
+      </div>
+
+      <div class="place-q" data-pq="exp">
+        <p>3. How often have you led or taken part in a paediatric resuscitation?</p>
+        <div class="place-opts">
+          <button type="button" data-v="none" aria-pressed="false">Never, or only in simulation</button>
+          <button type="button" data-v="some" aria-pressed="false">A few times, with support</button>
+          <button type="button" data-v="many" aria-pressed="false">Routinely</button>
+        </div>
+      </div>
+
+      <div class="place-result" id="placeResult" hidden></div>
+    </section>
+      </section>
+
+      <section class="onb-step" data-step="4" hidden>
+        <p class="onb-kicker">Step 4 of 4</p>
+        <h2>Your study plan</h2>
+        <div id="onbPath" class="place-result"></div>
+        <div class="plan-grid">
+          <div class="plan-tile"><span class="pl">Your scope</span><span class="pv" id="planScope">&mdash;</span></div>
+          <div class="plan-tile"><span class="pl">Notional time</span><span class="pv" id="planHours">&mdash;</span></div>
+          <div class="plan-tile"><span class="pl">Finishes in</span><span class="pv" id="planWeeks">&mdash;</span></div>
+          <div class="plan-tile"><span class="pl">Target date</span><span class="pv" id="planDate">&mdash;</span></div>
+        </div>
+        <div class="plan-controls">
+          <div>
+            <label for="planMins">Minutes per sitting</label>
+            <select id="planMins">
+              <option value="30">30</option>
+              <option value="45" selected>45</option>
+              <option value="60">60</option>
+              <option value="90">90</option>
+            </select>
+          </div>
+          <div>
+            <label for="planDays">Days per week</label>
+            <select id="planDays">
+              <option value="3">3</option>
+              <option value="4" selected>4</option>
+              <option value="5">5</option>
+              <option value="7">7</option>
+            </select>
+          </div>
+        </div>
+        <div class="onb-note">A plan is a nudge, not a lock. Nothing expires, nothing is graded on time, and the target date only ever appears on your own dashboard.</div>
+      </section>
+
+    </div>
+
+    <div class="onb-foot">
+      <button type="button" class="btn ghost" id="onbBack" hidden>Back</button>
+      <span class="grow"></span>
+      <button type="button" class="btn" id="onbNext">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- search palette -->
+<div class="srch noprint" id="srch" role="dialog" aria-modal="true" aria-label="Search the module" hidden>
+  <div class="srch-panel">
+    <div class="srch-top">
+      <svg class="srch-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5 L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input type="search" id="srchInput" placeholder="Search all 20 units and the appendices…" autocomplete="off" autocorrect="off" spellcheck="false" aria-controls="srchResults">
+      <button type="button" class="iconbtn sm" id="srchClose" aria-label="Close search">&#10005;</button>
+    </div>
+    <div class="srch-results" id="srchResults" role="listbox" aria-label="Search results"></div>
+    <div class="srch-foot">
+      <span id="srchCount">Type to search &mdash; doses, thresholds, a phrase you half remember.</span>
+      <span class="srch-keys"><kbd>↑</kbd><kbd>↓</kbd> move <kbd>↵</kbd> open <kbd>Esc</kbd> close</span>
+    </div>
+  </div>
+</div>
+
+<!-- full-screen figure viewer -->
+<div class="figzoom noprint" id="figZoom" role="dialog" aria-modal="true" aria-labelledby="figZoomTitle" hidden>
+  <div class="figzoom-head">
+    <h2 id="figZoomTitle">Diagram</h2>
+    <button type="button" class="iconbtn" id="figZoomClose" aria-label="Close the diagram">&#10005;&nbsp; Close</button>
+  </div>
+  <div class="figzoom-body" id="figZoomBody"></div>
+</div>
+
+<div class="drawer noprint" id="drawer" data-open="0">
+  <div class="drawer-panel">
+    <button class="iconbtn close" id="drawerClose" aria-label="Close contents">&#10005;&nbsp; Close</button>
+    <nav id="tocMobile" aria-label="Contents"></nav>
+  </div>
+</div>
+
+<header class="masthead noprint">
+  <div class="masthead-in">
+    <div>
+      <div class="brandline">
+        <span>Vikkypaedia</span><span class="dot"></span><span class="sub">Paediatric Medical Education</span>
+      </div>
+      <h1>Paediatric Advanced Life Support 2025</h1>
+      <p class="mast-tag">A mastery-based, self-paced module on paediatric resuscitation &mdash; from the deteriorating child and high-quality CPR to the arrest pathways, post-arrest care and life after arrest, written from the <b>2025 AHA/AAP Guidelines for CPR and Emergency Cardiovascular Care</b> and read across the resource gradient. Not the AHA PALS course.</p>
+      <p class="principle">Learn what matters. Understand why it matters. Practise using it. Apply it where you work.</p>
+      <div class="chips">
+        <span class="chip"><b>20</b> units &middot; 5 Parts</span>
+        <span class="chip"><b>~28</b> notional hours</span>
+        <span class="chip">Student &middot; nurse &middot; PG &middot; faculty</span>
+        <span class="chip">Mastery-gated</span>
+        <span class="chip">Works offline</span>
+        <span class="chip">No account &middot; no tracking</span>
+      </div>
+    </div>
+
+    <div class="hero-card">
+      <h2>Your progress</h2>
+      <div class="ring" role="img" aria-label="Overall mastery">
+        <span class="ring-val"><b id="heroPct">0%</b><span>mastered</span></span>
+      </div>
+      <div class="btnrow">
+        <a class="btn" href="#dashboard">Open dashboard</a>
+      </div>
+      <p class="hc-note">Progress lives in this browser only. Nothing is sent anywhere.</p>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+
+  <aside class="side noprint" aria-label="Contents">
+    <nav id="tocDesk"></nav>
+  </aside>
+
+  <main id="main">
+
+    <!-- learning arc -->
+    <div class="arc" role="region" aria-label="Learning arc" tabindex="0">
+      <div class="arc-step" data-p="A"><b>Why children arrest</b><span>two roads to arrest</span></div>
+      <div class="arc-step" data-p="A"><b>Approach and teams</b><span>ABCDE · closed loop</span></div>
+      <div class="arc-step" data-p="B"><b>BLS</b><span>CPR 2025 · choking · AED</span></div>
+      <div class="arc-step" data-p="B"><b>Airway and drugs</b><span>ventilation · IO · epinephrine</span></div>
+      <div class="arc-step" data-p="C"><b>Before arrest</b><span>failure · shock · rhythms</span></div>
+      <div class="arc-step" data-p="D"><b>Cardiac arrest</b><span>shockable · nonshockable</span></div>
+      <div class="arc-step" data-p="E"><b>After ROSC</b><span>targets · prognosis · survivors</span></div>
+      <div class="arc-step" data-p="E"><b>Capstone</b><span>follow Kabir · future directions</span></div>
+    </div>
+
+    <!-- profile bar (after first run) -->
+    <div class="profile-bar noprint" id="profileBar" hidden>
+      <div class="pb-id">
+        <span class="pb-avatar" id="pbInitials" aria-hidden="true"></span>
+        <div><b id="pbName"></b><span id="pbMeta"></span></div>
+      </div>
+      <span class="grow"></span>
+      <span class="pb-plan" id="pbPlan"></span>
+      <button class="btn ghost sm" id="pbEdit">Edit my details</button>
+    </div>
+
+    <!-- mastery dashboard -->
+    <section class="card noprint" id="dashboard" aria-labelledby="dashH">
+      <div class="dash-head">
+        <h2 id="dashH">Your mastery</h2>
+        <span class="dash-status" id="dashStatus">Not started</span>
+      </div>
+      <p class="bar"><i id="dashBar" style="width:0%"></i></p>
+      <div class="nextstep" id="nextStep">
+        <div class="ns-txt"><span class="ns-k">Your next step</span><b id="nsTitle">Start Unit 1</b><span id="nsDesc"></span><span class="ns-ret" id="nsReturn" hidden></span></div>
+        <button class="btn" id="nsGo" type="button">Open</button>
+      </div>
+      <div class="statgrid">
+        <div class="stat"><span class="sl">Units</span><span class="sv" id="dashLeft">0 of 20 units mastered</span></div>
+        <div class="stat"><span class="sl">Checkpoints</span><span class="sv" id="dashRight">0 of 40 checkpoints</span></div>
+        <div class="stat"><span class="sl">Parts open</span><span class="sv" id="statParts">A of A&ndash;E</span></div>
+        <div class="stat"><span class="sl">Retention</span><span class="sv" id="statRet">Nothing due</span></div>
+      </div>
+      <div class="loopgrid">
+        <div class="stat days"><span class="sl">Study days &middot; last 14</span><div class="daystrip" id="dayStrip" aria-hidden="true"></div><span class="sv sm" id="dayWeek"></span><span class="sn" id="dayBest"></span></div>
+        <div class="stat"><span class="sl">Calibration</span><span class="sv sm" id="statCal">Rate your confidence to see this</span><span class="sn" id="statCalNote"></span></div>
+      </div>
+      <div class="ugrid" id="ugrid" role="list" aria-label="Unit status"></div>
+      <div class="legend">
+        <span><i class="lg-n"></i>Not attempted</span>
+        <span><i class="lg-a"></i>Attempted</span>
+        <span><i class="lg-m"></i>Mastered</span>
+        <span><i class="lg-r"></i>Review due</span>
+      </div>
+      <div class="btnrow">
+        <button class="btn" id="continueBtn">Continue</button>
+        <button class="btn ghost" id="expandAll">Expand all open units</button>
+        <button class="btn ghost" id="collapseAll">Collapse all</button>
+      </div>
+    </section>
+
+    <!-- retention / spaced retrieval -->
+    <section class="card retention noprint" id="retentionCard" hidden aria-labelledby="retH">
+      <h3 id="retH">Retention check <span class="rcount" id="retCount">0</span></h3>
+      <p class="dash-status" id="retIntro">Items you have already passed, returning at spaced intervals. Answer from memory &mdash; this is what turns a pass into durable knowledge.</p>
+      <div id="retSlot"></div>
+    </section>
+
+
+
+    <!-- toolbar -->
+    <div class="toolbar noprint" role="region" aria-label="Display controls">
+      <div class="tb-group">
+        <span class="tb-label">Priority</span>
+        <button class="toggle" data-set="pri" data-v="all" aria-pressed="true">Everything</button>
+        <button class="toggle" data-set="pri" data-v="core" aria-pressed="false">Must + good</button>
+        <button class="toggle" data-set="pri" data-v="must" aria-pressed="false">Must-know only</button>
+      </div>
+      <div class="tb-group">
+        <span class="tb-label">Level</span>
+        <button class="toggle" data-set="lvl" data-v="e" aria-pressed="false">Essentials</button>
+        <button class="toggle" data-set="lvl" data-v="a" aria-pressed="false">Advanced</button>
+        <button class="toggle" data-set="lvl" data-v="x" aria-pressed="true">Expert</button>
+      </div>
+      <div class="tb-group">
+        <span class="tb-label">Setting</span>
+        <button class="toggle" data-set="set" data-v="both" aria-pressed="true">Both tracks</button>
+        <button class="toggle" data-set="set" data-v="ideal" aria-pressed="false">Ideal</button>
+        <button class="toggle" data-set="set" data-v="rc" aria-pressed="false">Resource-constrained</button>
+      </div>
+      <div class="tb-group">
+        <span class="tb-label">Text</span>
+        <button class="toggle" data-set="fs" data-v="s" aria-pressed="false">A</button>
+        <button class="toggle" data-set="fs" data-v="m" aria-pressed="true">A</button>
+        <button class="toggle" data-set="fs" data-v="l" aria-pressed="false">A</button>
+        <button class="toggle" data-set="fs" data-v="xl" aria-pressed="false">A</button>
+        <span class="tb-label" style="min-width:auto;margin-left:10px">Theme</span>
+        <button class="toggle" data-set="theme" data-v="light" aria-pressed="false">Light</button>
+        <button class="toggle" data-set="theme" data-v="dark" aria-pressed="false">Dark</button>
+        <button class="toggle" data-set="theme" data-v="system" aria-pressed="true">System</button>
+      </div>
+    </div>
+
+    <div class="note-grid noprint">
+      <div class="note" id="howItWorks">
+        <h3>How this module works</h3>
+        <ul>
+          <li><b>Mastery, not completion.</b> There is no &ldquo;mark as read&rdquo; button anywhere. A unit is mastered when both its checkpoint questions are currently answered correctly.</li>
+          <li><b>Parts unlock in order.</b> Part B opens when every unit in Part A is mastered, and so on. Part A is open now.</li>
+          <li><b>Hints before answers.</b> Stuck on a question? Take a nudge, then a structured hint. Using a hint still counts &mdash; the item simply comes back sooner.</li>
+          <li><b>Spaced retrieval.</b> Passed items return at 1, 3, 7, 21 and 60 days. A miss returns in 10 minutes.</li>
+          <li><b>Remediation is built in.</b> Every wrong answer opens the full rationale, points at the exact section, and re-queues the item.</li>
+        </ul>
+      </div>
+      <div class="note privacy">
+        <h3>Your privacy</h3>
+        <ul>
+          <li>Everything you do stays in <b>this browser on this device</b>. There is no account, no server, no analytics, no telemetry.</li>
+          <li>Nothing is transmitted anywhere. The file works with aeroplane mode on.</li>
+          <li>The Digital Personal Data Protection Act 2023 is satisfied here by collecting nothing at all.</li>
+          <li>You can erase all progress with one click at the bottom of the final assessment.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note safety noprint" style="margin-bottom:18px">
+      <h3>Clinical safety &mdash; read this once</h3>
+      <p style="margin:0 0 .5em">This module is <b>education, not a protocol, and not certification to practise</b>. It is an original work written from the 2025 American Heart Association and American Academy of Pediatrics Guidelines for Cardiopulmonary Resuscitation and Emergency Cardiovascular Care (Part 6: Pediatric Basic Life Support; Part 8: Pediatric Advanced Life Support) and ILCOR 2025. It is <b>not the AHA PALS course</b>, does not reproduce the AHA provider manual, confers no PALS provider status, and is not affiliated with or endorsed by the AHA or AAP. PALS&reg; is a trademark of the American Heart Association.</p>
+      <p style="margin:0">Verify every dose, threshold and device setting against your institution&rsquo;s current protocol and the manufacturer&rsquo;s instructions before use in a patient. <b>Appendix E (drug and equipment annex) and Appendix F (references) are never locked</b> &mdash; they are open from the first minute, because clinical safety material behind a quiz is a patient-safety problem.</p>
+    </div>
+
+    <!--UNITS-->
+
+    <!--ASSESSMENT-->
+
+    <!--APPENDICES-->
+
+  </main>
+</div>
+
+<div class="printroot" id="printRoot"></div>
+<div class="printdoc" id="printDoc"></div>
+
+<!-- review runner: the whole spaced-retrieval queue, one item at a time -->
+<div class="rvw noprint" id="rvw" role="dialog" aria-modal="true" aria-labelledby="rvwTitle" hidden>
+  <div class="rvw-card">
+    <div class="rvw-top">
+      <h2 id="rvwTitle">Review from memory</h2>
+      <button type="button" class="iconbtn sm" id="rvwClose" aria-label="Close review">&#10005;</button>
+    </div>
+    <p class="rvw-prog" id="rvwProg"></p>
+    <p class="bar"><i id="rvwBar" style="width:0%"></i></p>
+    <div id="rvwSlot"></div>
+    <div class="btnrow"><button type="button" class="btn" id="rvwNext" hidden>Next item</button></div>
+    <p class="rvw-keys">Keys: 1&ndash;4 to answer &middot; Esc to close</p>
+  </div>
+</div>
+<div class="toasthost noprint" id="toastHost" aria-live="polite"></div>
+<div class="sr-only" id="liveRegion" aria-live="assertive" aria-atomic="true"></div>
+
+<footer class="noprint">
+  <div class="wrap">
+    <p><b>Paediatric Advanced Life Support 2025</b> &middot; Vikkypaedia &middot; Dr Vikram Sakaleshpur Kumar, Medical Educator.</p>
+    <p>Original educational work written from <i>Part 8: Pediatric Advanced Life Support</i> and <i>Part 6: Pediatric Basic Life Support</i>, 2025 AHA/AAP Guidelines for CPR and ECC. Not the AHA PALS course; PALS&reg; is a trademark of the American Heart Association. See Appendix F for full references. <a href="https://vikramsakaleshpurkumar-byte.github.io/">All Vikkypaedia modules</a></p>
+    <p>Licensed CC BY-NC-SA 4.0, excluding the Vikkypaedia name, the name and likeness of Dr Vikram Sakaleshpur Kumar, and the certificate signature block. Suggested citation: Sakaleshpur Kumar V. <i>Paediatric Advanced Life Support 2025: an evidence-governed, competency-based digital module for resource-constrained settings.</i> Vikkypaedia; 2026.</p>
+    <p id="verStamp" style="font-size:.78rem;opacity:.75"></p>
+  </div>
+</footer>

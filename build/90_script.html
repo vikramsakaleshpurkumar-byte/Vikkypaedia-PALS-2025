@@ -1,0 +1,1786 @@
+<script>
+/* ============================================================================
+   Vikkypaedia Standard · shared learning engine
+   Single file. No dependencies. No network. All state in localStorage.
+   ========================================================================= */
+(function(){
+"use strict";
+
+/* ------------------------------------------------------------------ config */
+/* Every module-specific value lives in build/05_module.html (window.VKP_MODULE).
+   The engine below is shared, byte-for-byte, by every Vikkypaedia module. */
+var MC        = window.VKP_MODULE;
+var VERSION   = MC.version;
+var BUILD     = MC.build;
+var ENGINE    = "vkp-standard-2.1";
+var MODULE    = { id: MC.id, title: MC.title };
+var STORE_KEY = MC.storeKey;
+var DAY       = 86400000;
+var LEITNER   = [1, 3, 7, 21, 60];        // days, by correct-streak box
+var FAIL_MS   = 10 * 60 * 1000;           // a missed item returns in 10 minutes
+var PARTS     = MC.parts;
+var DEFAULTS  = Object.assign({
+  signName: "Dr Vikram Sakaleshpur Kumar",
+  signRole: "Medical Educator",
+  signPhoto: "@@SIGNATURE@@",   // default: rendered signature (Great Vibes, SIL OFL), replaced at build
+  courseTitle: MC.title
+}, MC.defaults);
+
+/* ------------------------------------------------------------------ helpers */
+function $(s, r){ return (r||document).querySelector(s); }
+function $$(s, r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+function el(t, c, h){ var e=document.createElement(t); if(c) e.className=c; if(h!=null) e.innerHTML=h; return e; }
+function now(){ return Date.now(); }
+function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+function fmtDue(ms){
+  var d = ms - now();
+  if (d <= 0) return "due now";
+  if (d < 3600000) return "in " + Math.max(1, Math.round(d/60000)) + " min";
+  if (d < DAY)     return "in " + Math.round(d/3600000) + " h";
+  return "in " + Math.round(d/DAY) + " d";
+}
+function fmtSpan(ms){
+  if (!ms || ms <= 0) return "—";
+  if (ms < DAY) return Math.round(ms/3600000) + " hours";
+  var d = Math.floor(ms/DAY);
+  return d + (d===1 ? " day" : " days");
+}
+function shuffle(a, rnd){
+  rnd = rnd || Math.random;
+  for (var i=a.length-1; i>0; i--){ var j = Math.floor(rnd()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+
+/* ------------------------------------------------------------------ storage */
+var memFallback = null;
+function blank(){
+  return { v:1, items:{}, prefs:{ pri:"all", lvl:"x", set:"both", fs:"m", theme:"system" },
+           placement:null, lastUnit:null, exam:{ attempts:[], lockUntil:0 },
+           settings:null, started:null, profile:null, plan:null, onboarded:false,
+           days:{}, cal:{ s:[0,0], f:[0,0], g:[0,0] } };
+}
+var S = blank();
+
+function load(){
+  try{
+    var raw = localStorage.getItem(STORE_KEY);
+    if (raw){ var p = JSON.parse(raw); if (p && p.v === 1) S = Object.assign(blank(), p); }
+  } catch(e){ memFallback = memFallback || blank(); }
+  // faculty settings can also arrive from a seed script written by "export a configured copy"
+  try{
+    if (window.__VKP_SEED__ && !S.settings) S.settings = window.__VKP_SEED__;
+  } catch(e){}
+  if (!S.started) S.started = now();
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }
+  catch(e){ memFallback = S; }
+}
+function cfg(k){
+  var v = (S.settings && S.settings[k] != null) ? S.settings[k] : DEFAULTS[k];
+  return v;
+}
+
+/* ------------------------------------------------------------------ registry */
+var ITEMS = {};      // id -> {id, unit, part, node}
+var UNITS = {};      // n  -> {n, part, node, title, items:[ids]}
+var ORDER = [];      // unit numbers in document order
+
+function partOf(u){
+  for (var i=0;i<PARTS.length;i++) if (PARTS[i].units.indexOf(u) >= 0) return PARTS[i].key;
+  return "A";
+}
+
+function buildRegistry(){
+  $$(".unit").forEach(function(sec){
+    var n = parseInt(sec.getAttribute("data-unit"), 10);
+    var t = sec.getAttribute("data-title") || ("Unit " + n);
+    UNITS[n] = { n:n, part:partOf(n), node:sec, title:t, items:[] };
+    ORDER.push(n);
+    $$(".q", sec).forEach(function(q){
+      var id = q.getAttribute("data-q");
+      ITEMS[id] = { id:id, unit:n, part:partOf(n), node:q };
+      UNITS[n].items.push(id);
+      if (!S.items[id]) S.items[id] = { box:0, due:0, ok:false, firstPass:0, longest:0, retained:false, hint:0, tries:0 };
+    });
+  });
+  ORDER.sort(function(a,b){ return a-b; });
+}
+
+/* ------------------------------------------------------------------ status */
+function unitStatus(n){
+  var u = UNITS[n]; if (!u) return "not";
+  if (isLocked(n)) return "locked";
+  var all = u.items.length, ok = 0, attempted = false, reviewDue = false;
+  u.items.forEach(function(id){
+    var st = S.items[id];
+    if (st.tries > 0) attempted = true;
+    if (st.ok) { ok++; if (st.due && st.due <= now()) reviewDue = true; }
+  });
+  if (all && ok === all) return reviewDue ? "review" : "mastered";
+  if (attempted) return "attempted";
+  return "not";
+}
+function unitMastered(n){
+  var s = unitStatus(n);
+  return s === "mastered" || s === "review";
+}
+function partComplete(key){
+  var p = PARTS.filter(function(x){ return x.key===key; })[0];
+  if (!p) return false;
+  return p.units.every(unitMastered);
+}
+function partUnlocked(key){
+  var i = PARTS.map(function(p){ return p.key; }).indexOf(key);
+  if (i <= 0) return true;
+  for (var j=0;j<i;j++) if (!partComplete(PARTS[j].key)) return false;
+  return true;
+}
+function isLocked(n){ return !partUnlocked(partOf(n)); }
+
+function masteredCount(){ return ORDER.filter(unitMastered).length; }
+function checkpointsOK(){
+  var n=0; Object.keys(ITEMS).forEach(function(id){ if (S.items[id] && S.items[id].ok) n++; });
+  return n;
+}
+function totalItems(){ return Object.keys(ITEMS).length; }
+function retainedUnits(){
+  return ORDER.filter(function(n){
+    return UNITS[n].items.some(function(id){ return S.items[id] && S.items[id].retained; });
+  }).length;
+}
+function longestRetention(){
+  var m = 0;
+  Object.keys(S.items).forEach(function(id){ if (S.items[id].longest > m) m = S.items[id].longest; });
+  return m;
+}
+function dueItems(){
+  var t = now(), out = [];
+  Object.keys(ITEMS).forEach(function(id){
+    var st = S.items[id];
+    if (!st) return;
+    if (isLocked(ITEMS[id].unit)) return;
+    if (st.tries > 0 && st.due && st.due <= t) out.push(id);
+  });
+  // interleave across units rather than blocking by unit
+  out.sort(function(a,b){
+    var ua = ITEMS[a].unit, ub = ITEMS[b].unit;
+    if (ua !== ub) return (S.items[a].due - S.items[b].due) || (ua - ub);
+    return S.items[a].due - S.items[b].due;
+  });
+  var byUnit = {}, buckets = [];
+  out.forEach(function(id){ var u = ITEMS[id].unit; (byUnit[u] = byUnit[u] || []).push(id); });
+  var keys = Object.keys(byUnit), k = 0, left = out.length;
+  while (left > 0){
+    var key = keys[k % keys.length];
+    if (byUnit[key] && byUnit[key].length){ buckets.push(byUnit[key].shift()); left--; }
+    k++;
+    if (k > out.length * 4) break;
+  }
+  return buckets;
+}
+
+/* ------------------------------------------------------------------ MCQ */
+function letter(i){ return "ABCDEFG".charAt(i); }
+
+function wireQuestion(q){
+  var id  = q.getAttribute("data-q");
+  var opts = $$(".opt", q);
+  opts.forEach(function(b, i){
+    if (!$(".k", b)){
+      var k = el("span","k", letter(i));
+      b.insertBefore(k, b.firstChild);
+    }
+    b.setAttribute("type","button");
+    b.addEventListener("click", function(){ answer(q, b); });
+  });
+  var hb = $(".hint-btn", q);
+  if (hb) hb.addEventListener("click", function(){ nextHint(q); });
+  // hints are on demand: never reveal them until the learner asks
+  $$(".hint", q).forEach(function(h){ h.hidden = true; });
+  wireConfidence(q);
+  restoreQuestion(q);
+}
+
+function nextHint(q){
+  var id = q.getAttribute("data-q");
+  var hints = $$(".hint", q);
+  var shown = hints.filter(function(h){ return !h.hidden; }).length;
+  if (shown >= hints.length) return;
+  hints[shown].hidden = false;
+  S.items[id].hint = Math.max(S.items[id].hint, shown + 1);
+  save();
+  var btn = $(".hint-btn", q);
+  if (shown + 1 >= hints.length){ btn.disabled = true; btn.textContent = "No more hints"; }
+  else btn.textContent = "Still stuck? One more hint";
+  hints[shown].setAttribute("tabindex","-1");
+  hints[shown].focus();
+}
+
+function answer(q, btn){
+  var id  = q.getAttribute("data-q");
+  var st  = S.items[id];
+  var correct = btn.getAttribute("data-c") === "1";
+  var t = now();
+
+  $$(".opt", q).forEach(function(b){
+    b.disabled = true;
+    if (b.getAttribute("data-c") === "1") b.setAttribute("data-state","right");
+    else if (b === btn) b.setAttribute("data-state","wrong");
+  });
+
+  st.tries = (st.tries || 0) + 1;
+  st.ok = correct;
+
+  if (correct){
+    if (!st.firstPass){ st.firstPass = t; }
+    else {
+      var gap = t - st.firstPass;
+      if (gap >= DAY){ st.retained = true; if (gap > st.longest) st.longest = gap; }
+    }
+    st.box = clamp((st.box || 0) + 1, 1, 5);
+    var days = LEITNER[st.box - 1];
+    // an item answered with a hint stays shallow: it returns at the first interval
+    if (st.hint > 0 && st.box > 1) days = LEITNER[0];
+    st.due = t + days * DAY;
+  } else {
+    st.box = 0;
+    st.due = t + FAIL_MS;
+    st.firstPass = 0;
+    st.retained = st.retained; // an earlier retention event is not erased, but coverage is now lost
+  }
+
+  var v = $(".verdict", q) || el("p","verdict");
+  v.className = "verdict " + (correct ? "ok" : "no");
+  v.textContent = correct
+    ? ("Correct. This item returns " + fmtDue(st.due) + ".")
+    : ("Not this one. The item is re-queued and returns " + fmtDue(st.due) + ".");
+  var rat = $(".rationale", q);
+  if (rat){ rat.hidden = false; rat.parentNode.insertBefore(v, rat); }
+  else q.appendChild(v);
+
+  if (!correct && !$(".remed", q)){
+    var link = q.getAttribute("data-remed") || "";
+    var unit = ITEMS[id].unit;
+    var r = el("div","remed",
+      "<b>Remediation.</b> Re-read " + (link ? esc(link) : "the section above") +
+      " in Unit " + unit + " before you try again. This item is now queued to return in 10 minutes, " +
+      "and it will keep returning until you answer it cold.");
+    q.appendChild(r);
+  }
+  var hb = $(".hint-btn", q); if (hb) hb.disabled = true;
+
+  afterAnswer(q, id, correct);
+  S.lastUnit = "u" + ITEMS[id].unit;
+  save();
+  refresh();
+}
+
+function restoreQuestion(q){
+  var id = q.getAttribute("data-q"), st = S.items[id];
+  if (!st || !st.tries) return;
+  // an item that is due again is reset so it can be answered cold
+  if (st.due && st.due <= now()) return;
+  if (!st.ok) return;
+  $$(".opt", q).forEach(function(b){
+    b.disabled = true;
+    if (b.getAttribute("data-c") === "1") b.setAttribute("data-state","right");
+  });
+  var rat = $(".rationale", q); if (rat) rat.hidden = false;
+  var hb = $(".hint-btn", q); if (hb) hb.disabled = true;
+  lockConfidence(q);
+  var v = el("p","verdict ok","Passed. This item returns " + fmtDue(st.due) + ".");
+  if (rat) rat.parentNode.insertBefore(v, rat); else q.appendChild(v);
+}
+
+function resetQuestionUI(q){
+  $$(".opt", q).forEach(function(b){ b.disabled = false; b.removeAttribute("data-state"); });
+  var v = $(".verdict", q); if (v) v.remove();
+  var r = $(".remed", q); if (r) r.remove();
+  var rat = $(".rationale", q); if (rat) rat.hidden = true;
+  $$(".hint", q).forEach(function(h){ h.hidden = true; });
+  var hb = $(".hint-btn", q); if (hb){ hb.disabled = false; hb.textContent = "Need a hint?"; }
+  resetConfidence(q);
+}
+
+/* ------------------------------------------------------------------ accordions */
+function toggleUnit(sec, force){
+  var n = parseInt(sec.getAttribute("data-unit"), 10);
+  if (isLocked(n)){ showLockNote(sec); return; }
+  var open = force != null ? force : sec.getAttribute("data-open") !== "1";
+  sec.setAttribute("data-open", open ? "1" : "0");
+  var head = $(".unit-head", sec), body = $(".unit-body", sec);
+  head.setAttribute("aria-expanded", open ? "true" : "false");
+  body.hidden = !open;
+  if (open){ S.lastUnit = "u" + n; save(); }
+}
+function showLockNote(sec){
+  if ($(".lock-note", sec)) return;
+  var n = parseInt(sec.getAttribute("data-unit"), 10);
+  var key = partOf(n), i = PARTS.map(function(p){return p.key;}).indexOf(key);
+  var prev = PARTS[i-1];
+  var remaining = prev ? prev.units.filter(function(u){ return !unitMastered(u); }) : [];
+  var note = el("div","lock-note",
+    "<b>Locked.</b> Part " + key + " opens when every unit in Part " + (prev?prev.key:"A") +
+    " is mastered. Still outstanding: " + (remaining.length ? "Unit " + remaining.join(", Unit ") : "none") + ".");
+  sec.appendChild(note);
+  setTimeout(function(){ if (note.parentNode) note.remove(); }, 7000);
+}
+
+function wireAccordion(head, sec, kind){
+  head.setAttribute("role","button");
+  head.setAttribute("tabindex","0");
+  head.addEventListener("click", function(){ kind==="unit" ? toggleUnit(sec) : toggleApp(sec); });
+  head.addEventListener("keydown", function(e){
+    if (e.key === "Enter" || e.key === " "){ e.preventDefault(); kind==="unit" ? toggleUnit(sec) : toggleApp(sec); }
+  });
+}
+function toggleApp(sec){
+  var open = sec.getAttribute("data-open") !== "1";
+  sec.setAttribute("data-open", open ? "1" : "0");
+  $("h3", sec).setAttribute("aria-expanded", open ? "true" : "false");
+  $(".app-body", sec).hidden = !open;
+}
+
+/* ------------------------------------------------------------------ render */
+function renderUnitChrome(){
+  ORDER.forEach(function(n){
+    var u = UNITS[n], s = unitStatus(n), sec = u.node;
+    var badge = $(".ubadge", sec);
+    if (badge){
+      badge.setAttribute("data-s", s === "not" ? "not" : s);
+      badge.textContent = ({ not:"Not attempted", attempted:"In progress", mastered:"Mastered",
+                             review:"Review due", locked:"Locked" })[s];
+    }
+    sec.setAttribute("data-locked", isLocked(n) ? "1" : "0");
+    if (isLocked(n) && sec.getAttribute("data-open") === "1") toggleUnit(sec, false);
+
+    var mb = $(".mastery-badge", sec);
+    if (mb){
+      mb.setAttribute("data-s", s);
+      var ok = u.items.filter(function(id){ return S.items[id].ok; }).length;
+      mb.textContent = ({
+        not:      "Not yet attempted — answer both checkpoints to master this unit.",
+        attempted:"In progress — " + ok + " of " + u.items.length + " checkpoints currently correct.",
+        mastered: "Mastered. Both checkpoints correct. They will return for spaced retrieval.",
+        review:   "Mastered, with a retention check now due. Answer it from the card at the top of the page.",
+        locked:   "Locked."
+      })[s];
+    }
+  });
+}
+
+function renderPartStatus(){
+  PARTS.forEach(function(p){
+    var sec = document.getElementById("part" + p.key);
+    if (!sec) return;
+    var host = $(".part-status", sec);
+    if (!host){ host = el("div","part-status"); $(".part-head", sec).insertAdjacentElement("afterend", host); }
+    var done = p.units.filter(unitMastered).length;
+    var pct = Math.round(done / p.units.length * 100);
+    var unlocked = partUnlocked(p.key);
+    host.className = "part-status" + (unlocked ? "" : " locked");
+    if (!unlocked){
+      var i = PARTS.map(function(x){return x.key;}).indexOf(p.key);
+      var prev = PARTS[i-1];
+      var rem = prev.units.filter(function(u){ return !unitMastered(u); });
+      host.innerHTML = "<b>Locked.</b> Opens when Part " + prev.key + " is fully mastered — " +
+        rem.length + " unit" + (rem.length===1?"":"s") + " remaining (Unit " + rem.join(", Unit ") + ")." +
+        '<div class="pbar"><i style="width:' + pct + '%"></i></div>';
+    } else {
+      host.innerHTML = "<b>" + done + " of " + p.units.length + "</b> units mastered in this Part." +
+        (done === p.units.length ? " Part complete — the next Part is open." : "") +
+        '<div class="pbar"><i style="width:' + pct + '%"></i></div>';
+    }
+  });
+}
+
+function renderDashboard(){
+  var m = masteredCount(), tot = ORDER.length;
+  var ck = checkpointsOK(), ct = totalItems();
+  var pct = tot ? Math.round(m/tot*100) : 0;
+  $("#dashBar").style.width = pct + "%";
+  document.documentElement.style.setProperty("--progress", pct);
+  var hp = $("#heroPct"); if (hp) hp.textContent = pct + "%";
+  var tp = $("#tbPct");  if (tp) tp.textContent = pct + "% mastered";
+  var sp = $("#statParts");
+  if (sp) sp.textContent = PARTS.filter(function(p){ return partUnlocked(p.key); })
+                                .map(function(p){ return p.key; }).join(", ") + " of A–E";
+  $("#dashLeft").textContent  = m + " of " + tot + " units mastered";
+  $("#dashRight").textContent = ck + " of " + ct + " checkpoints currently correct";
+  var open = PARTS.filter(function(p){ return partUnlocked(p.key); }).map(function(p){ return p.key; });
+  $("#dashStatus").textContent = m === 0 ? "Not started"
+    : (m === tot ? "All units mastered" : "Parts open: " + open.join(", "));
+
+  var g = $("#ugrid"); g.innerHTML = "";
+  ORDER.forEach(function(n){
+    var s = unitStatus(n);
+    var c = el("button","ucell", String(n));
+    c.setAttribute("data-s", s);
+    c.setAttribute("role","listitem");
+    c.setAttribute("type","button");
+    c.setAttribute("title","Unit " + n + " — " + UNITS[n].title + " (" + s + ")");
+    c.setAttribute("aria-label","Unit " + n + ", " + UNITS[n].title + ", " + s);
+    c.addEventListener("click", function(){ goUnit(n); });
+    g.appendChild(c);
+  });
+}
+
+function goUnit(n){
+  var sec = UNITS[n] && UNITS[n].node;
+  if (!sec) return;
+  if (isLocked(n)){ showLockNote(sec); sec.scrollIntoView({behavior:"smooth", block:"center"}); return; }
+  toggleUnit(sec, true);
+  sec.scrollIntoView({behavior:"smooth", block:"start"});
+  $(".unit-head", sec).focus();
+}
+
+function renderTOC(){
+  ["#tocDesk","#tocMobile"].forEach(function(sel){
+    var nav = $(sel); if (!nav) return;
+    nav.innerHTML = "";
+    nav.appendChild(el("h4",null,"Learning arc"));
+    PARTS.forEach(function(p){
+      var sec = document.getElementById("part"+p.key);
+      var t = sec ? (sec.getAttribute("data-title") || ("Part "+p.key)) : ("Part "+p.key);
+      var lab = el("div","part-label", "<span>Part " + p.key + " · " + esc(t) + "</span>" +
+                   (partUnlocked(p.key) ? "" : ' <span class="lk">Locked</span>'));
+      nav.appendChild(lab);
+      p.units.forEach(function(n){
+        if (!UNITS[n]) return;
+        var a = el("a", isLocked(n) ? "locked" : "", '<span class="u">' + n + '</span>' + esc(UNITS[n].title));
+        a.href = "#u" + n;
+        a.addEventListener("click", function(e){ e.preventDefault(); goUnit(n); closeDrawer(); });
+        nav.appendChild(a);
+      });
+    });
+    nav.appendChild(el("h4",null,"Assessment"));
+    ["assessment|Final assessment &amp; certificate"].forEach(function(x){
+      var parts = x.split("|"), a = el("a",null,parts[1]); a.href = "#" + parts[0];
+      a.addEventListener("click", closeDrawer); nav.appendChild(a);
+    });
+    nav.appendChild(el("h4",null,"Appendices — always open"));
+    [["appA","A · Assessment bank"],["appB","B · Simulation library"],["appC","C · Faculty guide"],
+     ["appD","D · Curriculum mapping"],["appE","E · Drug &amp; equipment annex"],
+     ["appF","F · References"],["appG","G · Evidence-governed design"]].forEach(function(x){
+      var a = el("a",null,x[1]); a.href = "#" + x[0];
+      a.addEventListener("click", closeDrawer); nav.appendChild(a);
+    });
+  });
+}
+
+/* ------------------------------------------------------------------ retention */
+var retCurrent = null;
+function renderRetention(){
+  var card = $("#retentionCard"), slot = $("#retSlot");
+  var due = dueItems();
+  $("#retCount").textContent = due.length;
+  var sr = $("#statRet");
+  if (sr) sr.textContent = due.length === 0 ? "Nothing due" : (due.length + (due.length === 1 ? " item due" : " items due"));
+  if (!due.length){ card.hidden = true; slot.innerHTML = ""; retCurrent = null; return; }
+  card.hidden = false;
+  if (retCurrent && due.indexOf(retCurrent) >= 0 && $(".q", slot)) return;  // keep the open item
+  retCurrent = due[0];
+  slot.innerHTML = "";
+  var src = ITEMS[retCurrent].node;
+  var clone = src.cloneNode(true);
+  clone.setAttribute("data-q", retCurrent);
+  clone.setAttribute("data-retention","1");
+  $$(".conf", clone).forEach(function(n){ n.remove(); });
+  resetQuestionUI(clone);
+  wireConfidence(clone);
+  var h = $(".qh", clone);
+  if (h) h.innerHTML = 'Retention check · Unit ' + ITEMS[retCurrent].unit +
+    ' <span class="retag">from memory</span>';
+  slot.appendChild(clone);
+  // wire the clone; answering it updates the same item id and the source node
+  $$(".opt", clone).forEach(function(b,i){
+    if (!$(".k", b)) b.insertBefore(el("span","k", letter(i)), b.firstChild);
+    b.setAttribute("type","button");
+    b.addEventListener("click", function(){
+      answer(clone, b);
+      var srcQ = ITEMS[retCurrent].node;
+      resetQuestionUI(srcQ); restoreQuestion(srcQ);
+      setTimeout(function(){ retCurrent = null; renderRetention(); }, 2500);
+    });
+  });
+  var hb = $(".hint-btn", clone);
+  if (hb) hb.addEventListener("click", function(){ nextHint(clone); });
+}
+
+/* ------------------------------------------------------------------ prefs */
+function applyPrefs(){
+  var p = S.prefs;
+  document.documentElement.setAttribute("data-pri", p.pri);
+  document.documentElement.setAttribute("data-lvl", p.lvl);
+  document.documentElement.setAttribute("data-set", p.set);
+  document.documentElement.setAttribute("data-fs",  p.fs);
+  if (p.theme === "system") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", p.theme);
+  $$(".toggle[data-set]").forEach(function(b){
+    var k = b.getAttribute("data-set"), v = b.getAttribute("data-v");
+    b.setAttribute("aria-pressed", String(p[k] === v));
+  });
+}
+function wirePrefs(){
+  $$(".toggle[data-set]").forEach(function(b){
+    b.addEventListener("click", function(){
+      S.prefs[b.getAttribute("data-set")] = b.getAttribute("data-v");
+      save(); applyPrefs();
+    });
+  });
+  var tm = $("#themeBtnM");
+  if (tm) tm.addEventListener("click", function(){
+    var seq = ["system","light","dark"], i = seq.indexOf(S.prefs.theme);
+    S.prefs.theme = seq[(i+1) % seq.length]; save(); applyPrefs();
+  });
+}
+
+/* ------------------------------------------------------------------ placement */
+function wirePlacement(){
+  var sel = S.placement || {};
+  $$(".place-q").forEach(function(qd){
+    var k = qd.getAttribute("data-pq");
+    $$("button", qd).forEach(function(b){
+      if (sel[k] === b.getAttribute("data-v")) b.setAttribute("aria-pressed","true");
+      b.addEventListener("click", function(){
+        $$("button", qd).forEach(function(x){ x.setAttribute("aria-pressed","false"); });
+        b.setAttribute("aria-pressed","true");
+        S.placement = S.placement || {};
+        S.placement[k] = b.getAttribute("data-v");
+        save(); placementResult();
+      });
+    });
+  });
+  placementResult();
+}
+function placementResult(){
+  var p = S.placement, box = $("#placeResult");
+  if (!p || !p.role || !p.setting || !p.exp){ box.hidden = true; return; }
+  box.hidden = false;
+  if (p.role) S.prefs.lvl = p.role;
+  if (p.setting === "ideal" || p.setting === "rc") S.prefs.set = p.setting;
+  else S.prefs.set = "both";
+  save(); applyPrefs();
+
+  var path = MC.placement.paths[p.exp] || MC.placement.paths.none;
+  var tr = (p.setting === "rc") ? MC.placement.trackRc
+    : (p.setting === "ideal" ? MC.placement.trackIdeal : "You will see <b>both tracks side by side</b> throughout.");
+  var lv = ({e:"Essentials", a:"Advanced", x:"Expert"})[p.role];
+  box.innerHTML = "<b>Your path.</b> Depth set to <b>" + lv + "</b>. " + tr + "<br><br>" + path;
+}
+
+/* ------------------------------------------------------------------ enrolment, plan, onboarding */
+function fnv(str){
+  var h = 2166136261;
+  for (var i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  var s = (h >>> 0).toString(36).toUpperCase();
+  while (s.length < 7) s = "0" + s;
+  return s;
+}
+function certReady(){
+  return checkpointsOK() === totalItems() &&
+         retainedUnits() >= cfg("retainUnits") &&
+         bestScore() >= cfg("cut");
+}
+function initialsOf(name){
+  var parts = String(name||"").trim().split(/\s+/).filter(function(w){
+    return !/^(dr|prof|mr|mrs|ms|miss)\.?$/i.test(w); });
+  if (!parts.length) return "?";
+  var a = parts[0].charAt(0), b = parts.length > 1 ? parts[parts.length-1].charAt(0) : "";
+  return (a + b).toUpperCase();
+}
+var TRACKS = { e:"Essentials", a:"Advanced", x:"Expert" };
+var SCOPES = MC.scopes;
+function computePlan(mins, days){
+  var p = S.placement || {};
+  var sc = SCOPES[p.role] || SCOPES.x;
+  var f = p.exp === "many" ? 0.7 : (p.exp === "some" ? 0.85 : 1);
+  var hours = Math.round(sc.hours * f);
+  mins = mins || 45; days = days || 4;
+  var weeks = Math.max(1, Math.ceil((hours * 60) / (mins * days * 1)) );
+  var target = now() + weeks * 7 * DAY;
+  return { scope: sc.label, hours: hours, mins: mins, days: days, weeks: weeks, target: target };
+}
+function fmtDate(ms){
+  try { return new Date(ms).toLocaleDateString(undefined, { day:"numeric", month:"short", year:"numeric" }); }
+  catch(e){ return new Date(ms).toDateString(); }
+}
+function renderPlan(){
+  var mins = parseInt(($("#planMins")||{}).value, 10) || 45;
+  var days = parseInt(($("#planDays")||{}).value, 10) || 4;
+  var pl = computePlan(mins, days);
+  var set = function(id, v){ var n = $(id); if (n) n.textContent = v; };
+  set("#planScope", pl.scope);
+  set("#planHours", "≈" + pl.hours + " h");
+  set("#planWeeks", "≈" + pl.weeks + (pl.weeks === 1 ? " week" : " weeks"));
+  set("#planDate", fmtDate(pl.target));
+  var path = $("#placeResult"), host = $("#onbPath");
+  if (host) host.innerHTML = (path && !path.hidden) ? path.innerHTML
+    : "<b>Your path.</b> No placement answers yet, so the module opens at full depth with both clinical tracks shown. You can change that any time in the display controls.";
+  return pl;
+}
+
+/* ---- profile bar ---- */
+function renderProfileBar(){
+  var bar = $("#profileBar"); if (!bar) return;
+  if (!S.onboarded){ bar.hidden = true; return; }
+  bar.hidden = false;
+  var pr = S.profile, ed = $("#pbEdit");
+  if (!pr || !pr.name){
+    $("#pbInitials").textContent = "–";
+    $("#pbName").textContent = "Anonymous learner";
+    $("#pbMeta").textContent = "No details saved on this device";
+    if (ed) ed.textContent = "Add my details";
+  } else {
+    $("#pbInitials").textContent = initialsOf(pr.name);
+    $("#pbName").textContent = pr.name;
+    var bits = [];
+    if (S.placement && TRACKS[S.placement.role]) bits.push(TRACKS[S.placement.role] + " track");
+    if (pr.institution) bits.push(pr.institution);
+    bits.push("enrolled " + fmtDate(pr.enrolledAt || S.started || now()));
+    $("#pbMeta").textContent = bits.join(" · ");
+    if (ed) ed.textContent = "Edit my details";
+  }
+  var pp = $("#pbPlan");
+  if (pp){
+    if (S.plan && S.plan.target){
+      var left = Math.ceil((S.plan.target - now()) / DAY);
+      pp.hidden = false;
+      pp.textContent = left > 0
+        ? ("Target " + fmtDate(S.plan.target) + " · " + left + (left === 1 ? " day left" : " days left"))
+        : ("Target date passed · " + fmtDate(S.plan.target));
+    } else { pp.hidden = true; }
+  }
+  var cn = $("#certName");
+  if (cn && !cn.value && S.profile && S.profile.name) cn.value = S.profile.name;
+}
+
+/* ---- onboarding flow ---- */
+var ONB = { step:1, last:4 };
+function onbShow(n){
+  ONB.step = clamp(n, 1, ONB.last);
+  $$(".onb-step").forEach(function(sec){
+    sec.hidden = parseInt(sec.getAttribute("data-step"), 10) !== ONB.step;
+  });
+  $$("#onbDots i").forEach(function(d, i){ d.setAttribute("data-on", i < ONB.step ? "1" : "0"); });
+  var back = $("#onbBack"), next = $("#onbNext");
+  back.hidden = ONB.step === 1;
+  next.textContent = ONB.step === ONB.last ? "Start Unit 1" : "Continue";
+  var e2 = $("#enErr"); if (e2) e2.hidden = true;
+  if (ONB.step === 4) renderPlan();
+  var panel = $(".onb-body"); if (panel) panel.scrollTop = 0;
+  var focus = ONB.step === 2 ? $("#enName") : next;
+  if (focus) try{ focus.focus(); }catch(e){}
+}
+function openOnboarding(step){
+  var o = $("#onb"); if (!o) return;
+  var pr = S.profile || {};
+  var set = function(id, v){ var n = $(id); if (n) n.value = v || ""; };
+  set("#enName", pr.name); set("#enInst", pr.institution);
+  set("#enReg", pr.reg);   set("#enEmail", pr.email);
+  passportPrefill();
+  if (S.plan){
+    var m = $("#planMins"), d = $("#planDays");
+    if (m) m.value = String(S.plan.mins || 45);
+    if (d) d.value = String(S.plan.days || 4);
+  }
+  o.hidden = false;
+  document.body.style.overflow = "hidden";
+  onbShow(step || 1);
+}
+function closeOnboarding(){
+  var o = $("#onb"); if (o) o.hidden = true;
+  document.body.style.overflow = "";
+  renderProfileBar();
+}
+function readEnrol(){
+  var v = function(id){ var n = $(id); return n ? n.value.trim() : ""; };
+  return { name:v("#enName"), institution:v("#enInst"), reg:v("#enReg"), email:v("#enEmail") };
+}
+function saveEnrol(){
+  var e = readEnrol();
+  if (!e.name) return false;
+  e.enrolledAt = (S.profile && S.profile.enrolledAt) || now();
+  e.updatedAt = now();
+  S.profile = e;
+  save();
+  return true;
+}
+function finishOnboarding(){
+  S.plan = renderPlan();
+  S.onboarded = true;
+  save();
+  closeOnboarding();
+  refresh();
+  var n = ORDER.filter(function(u){ return !isLocked(u) && !unitMastered(u); })[0];
+  if (n == null) n = ORDER.filter(function(u){ return !isLocked(u); })[0];
+  if (n != null) goUnit(n);
+}
+function wireOnboarding(){
+  var o = $("#onb"); if (!o) return;
+  $("#onbNext").addEventListener("click", function(){
+    if (ONB.step === 2){
+      if (!saveEnrol()){
+        var err = $("#enErr");
+        if (err){ err.hidden = false; err.textContent = "A name is needed — it is what goes on the certificate. Use “Skip for now” if you would rather not give one."; }
+        var n = $("#enName"); if (n) n.focus();
+        return;
+      }
+    }
+    if (ONB.step === 3){
+      var p = S.placement || {};
+      if (!p.role || !p.setting || !p.exp){
+        var box = $("#placeResult");
+        if (box){ box.hidden = false;
+          box.innerHTML = "<b>Three taps needed.</b> Answer all three so the module can set your depth, your clinical track and your pace. Use “Skip for now” if you would rather decide later."; }
+        return;
+      }
+    }
+    if (ONB.step === ONB.last){ finishOnboarding(); return; }
+    onbShow(ONB.step + 1);
+  });
+  $("#onbBack").addEventListener("click", function(){ onbShow(ONB.step - 1); });
+  $("#onbSkip").addEventListener("click", function(){
+    if (ONB.step >= 2) saveEnrol();
+    S.onboarded = true; save(); closeOnboarding(); refresh();
+  });
+  ["#planMins","#planDays"].forEach(function(sel){
+    var n = $(sel); if (n) n.addEventListener("change", renderPlan);
+  });
+  var ed = $("#pbEdit");
+  if (ed) ed.addEventListener("click", function(){ openOnboarding(2); });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape" && !$("#onb").hidden){
+      S.onboarded = true; save(); closeOnboarding(); refresh();
+    }
+  });
+}
+
+/* ---- completion record ---- */
+function recordBasis(r){
+  return ["vkp-cr1", r.module.id, r.module.version, r.learner.name, r.learner.institution,
+          r.enrolledAt, r.issuedAt, r.result.unitsMastered, r.result.checkpointsCorrect,
+          r.result.retentionUnits, r.result.bestScore, r.result.cutScore,
+          r.result.certified ? 1 : 0, r.verificationCode].join("|");
+}
+function completionRecord(){
+  var pr = S.profile || {}, pl = S.placement || {};
+  var r = {
+    format: "vikkypaedia-completion-record",
+    formatVersion: 1,
+    module: { id: MC.id, title: cfg("courseTitle"), version: VERSION, build: BUILD },
+    learner: {
+      name: pr.name || "",
+      institution: pr.institution || "",
+      registration: pr.reg || "",
+      email: pr.email || "",
+      track: TRACKS[pl.role] || "",
+      setting: pl.setting || ""
+    },
+    enrolledAt: pr.enrolledAt || S.started || 0,
+    issuedAt: now(),
+    result: {
+      unitsMastered: masteredCount(),
+      unitsTotal: ORDER.length,
+      checkpointsCorrect: checkpointsOK(),
+      checkpointsTotal: totalItems(),
+      retentionUnits: retainedUnits(),
+      retentionRequired: cfg("retainUnits"),
+      longestRetention: fmtSpan(longestRetention()),
+      bestScore: bestScore(),
+      cutScore: cfg("cut"),
+      attempts: (S.exam.attempts || []).length,
+      certified: certReady()
+    },
+    signatory: { name: cfg("signName"), role: cfg("signRole") },
+    verificationCode: verifyCode(),
+    attestation: "Self-attested. Generated on the learner's own device from local progress data. Re-derivable, not tamper-proof: treat it as a signed statement by the learner, not as proof issued by a third party.",
+    scope: MC.recordNote
+  };
+  r.checksum = fnv(recordBasis(r));
+  return r;
+}
+function downloadRecord(){
+  var r = completionRecord();
+  var name = (r.learner.name || "learner").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  var blob = new Blob([JSON.stringify(r, null, 2)], {type:"application/json"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = MC.slug + "-completion-record-" + (name || "learner") + ".json";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+
+/* ------------------------------------------------------------------ exam */
+var EXAM = null;
+
+function poolFromDOM(){
+  var pool = [];
+  Object.keys(ITEMS).forEach(function(id){
+    var q = ITEMS[id].node;
+    var opts = $$(".opt", q).map(function(b){
+      var c = b.cloneNode(true); var k = $(".k", c); if (k) k.remove();
+      return { html: c.innerHTML.trim(), correct: b.getAttribute("data-c") === "1" };
+    });
+    pool.push({
+      id: id, unit: ITEMS[id].unit, source: "checkpoint",
+      stem: $(".stem", q) ? $(".stem", q).innerHTML : "",
+      opts: opts,
+      critical: q.getAttribute("data-critical") === "1",
+      rationale: $(".rationale", q) ? $(".rationale", q).innerHTML : ""
+    });
+  });
+  (window.EXAM_ITEMS || []).forEach(function(it){ pool.push(it); });
+  return pool;
+}
+
+function examLocked(){
+  var e = S.exam;
+  if (e.attempts.length >= cfg("attempts")) return "used";
+  if (e.lockUntil && e.lockUntil > now()) return "cooling";
+  return false;
+}
+/* Safety gate (optional, per module): an attempt that misses any item flagged
+   safety-critical does not count towards the applied criterion, whatever its score. */
+function safetyGate(){ return !!(MC && MC.safetyGate); }
+function attemptCounts(a){ return !(safetyGate() && a.critMiss > 0); }
+function bestScore(){
+  return S.exam.attempts.reduce(function(m,a){ return attemptCounts(a) ? Math.max(m, a.pct) : m; }, 0);
+}
+
+function renderCriteria(){
+  var host = $("#criteria"); if (!host) return;
+  var cov = checkpointsOK(), covT = totalItems();
+  var ret = retainedUnits(), retT = cfg("retainUnits");
+  var best = bestScore(), cut = cfg("cut");
+
+  function crit(met, title, val, note){
+    return '<div class="crit" data-met="' + (met?1:0) + '"><h4>' + title + '</h4>' +
+           '<div class="cval">' + val + '</div><div class="cnote">' + note + '</div></div>';
+  }
+  host.innerHTML =
+    crit(cov === covT, "1 · Coverage", cov + "/" + covT,
+         "checkpoint items currently correct. All " + covT + " required.") +
+    crit(ret >= retT, "2 · Retention", ret + "/" + ORDER.length,
+         "units with an item answered correctly ≥24 h after first pass. " + retT + " required — breadth across units, not raw item count.") +
+    crit(best >= cut, "3 · Applied", (S.exam.attempts.length ? best + "%" : "—"),
+         "best closed-book integrated score. Cut score " + cut + "% (provisional)." +
+         (safetyGate() ? " An attempt with any safety-critical miss does not count." : ""));
+
+  var ready = (cov === covT) && (ret >= retT) && (best >= cut);
+  var gate = $("#certGate");
+  if (gate) gate.hidden = !ready;
+  var notReady = $("#certNotReady");
+  if (notReady) notReady.hidden = ready;
+
+  var st = $("#examState");
+  if (st){
+    var lk = examLocked();
+    var msg;
+    if (lk === "used") msg = "You have used all " + cfg("attempts") + " attempts. Ask your faculty to reset, or erase your progress to start the module again.";
+    else if (lk === "cooling") msg = "Attempt locked until " + new Date(S.exam.lockUntil).toLocaleString() + " (" + cfg("lockHours") + "-hour cooling period). Use the time for the remediation clinic below.";
+    else if (cov !== covT) msg = "Open now, but you will not pass yet: " + (covT - cov) + " checkpoint items are still not correct. The exam samples from them.";
+    else msg = "Ready. " + (cfg("attempts") - S.exam.attempts.length) + " attempt(s) remaining.";
+    st.textContent = msg;
+  }
+  var sb = $("#startExam");
+  if (sb) sb.disabled = !!examLocked();
+
+  var hist = $("#examHistory");
+  if (hist){
+    if (!S.exam.attempts.length) hist.innerHTML = "";
+    else hist.innerHTML = "<h4 style='margin-bottom:.4em'>Attempts</h4><ul>" +
+      S.exam.attempts.map(function(a,i){
+        return "<li>Attempt " + (i+1) + " — <b>" + a.pct + "%</b> (" + a.right + "/" + a.n + ")" +
+               (attemptCounts(a) ? "" : " · <b>not counted</b> (" + a.critMiss + " safety-critical miss" + (a.critMiss===1?"":"es") + ")") + " on " +
+               new Date(a.at).toLocaleString() + "</li>";
+      }).join("") + "</ul>";
+  }
+}
+
+function startExam(){
+  if (examLocked()) return;
+  var pool = poolFromDOM();
+  var n = Math.min(cfg("items"), pool.length);
+  var picked = shuffle(pool.slice()).slice(0, n).map(function(it){
+    var opts = shuffle(it.opts.map(function(o){ return o; }));
+    return { ref:it, opts:opts, chosen:-1 };
+  });
+  EXAM = { qs:picked, i:0, startedAt:now(), endsAt: now() + cfg("minutes")*60000, done:false };
+  drawExam();
+  var t = setInterval(function(){
+    if (!EXAM || EXAM.done){ clearInterval(t); return; }
+    paintTimer();
+    if (EXAM.endsAt - now() <= 0){ clearInterval(t); finishExam(true); }
+  }, 1000);
+}
+
+function paintTimer(){
+  if (!EXAM) return;
+  var tm = $("#examTimer"); if (!tm) return;
+  var left = EXAM.endsAt - now();
+  var m = Math.max(0, Math.floor(left/60000)), s = Math.max(0, Math.floor(left%60000/1000));
+  tm.textContent = m + ":" + (s<10?"0":"") + s;
+  tm.className = "timer" + (left < 300000 ? " low" : "");
+}
+
+function drawExam(){
+  var host = $("#examRunner"); host.hidden = false;
+  var q = EXAM.qs[EXAM.i];
+  var answered = EXAM.qs.filter(function(x){ return x.chosen >= 0; }).length;
+  host.innerHTML =
+    '<div class="exam-topbar"><span>Item <b>' + (EXAM.i+1) + '</b> of ' + EXAM.qs.length +
+    ' · answered ' + answered + '</span><span class="timer" id="examTimer">—</span></div>' +
+    '<div class="q"><div class="qh">Closed book · answer from memory</div>' +
+    '<p class="stem">' + q.ref.stem + '</p><ol class="opts" id="examOpts"></ol></div>' +
+    '<div class="btnrow">' +
+      '<button class="btn ghost" id="exPrev"' + (EXAM.i===0?" disabled":"") + '>Previous</button>' +
+      '<button class="btn ghost" id="exNext"' + (EXAM.i===EXAM.qs.length-1?" disabled":"") + '>Next</button>' +
+      '<button class="btn" id="exSubmit">Submit attempt</button>' +
+    '</div>' +
+    '<p class="dash-status" style="margin-top:.6em">No hints, no rationale, and no feedback until you submit. You may move back and forth and change answers.</p>';
+  var ol = $("#examOpts");
+  q.opts.forEach(function(o, i){
+    var li = el("li");
+    var b = el("button","opt",'<span class="k">' + letter(i) + '</span>' + o.html);
+    b.setAttribute("type","button");
+    if (q.chosen === i) b.style.borderColor = "var(--brand)", b.style.background = "var(--brand-soft)";
+    b.addEventListener("click", function(){
+      q.chosen = i; drawExam();
+    });
+    li.appendChild(b); ol.appendChild(li);
+  });
+  paintTimer();
+  $("#exPrev").addEventListener("click", function(){ EXAM.i = Math.max(0, EXAM.i-1); drawExam(); });
+  $("#exNext").addEventListener("click", function(){ EXAM.i = Math.min(EXAM.qs.length-1, EXAM.i+1); drawExam(); });
+  $("#exSubmit").addEventListener("click", function(){
+    var un = EXAM.qs.filter(function(x){ return x.chosen < 0; }).length;
+    if (un && !confirm(un + " item(s) are unanswered and will be marked wrong. Submit anyway?")) return;
+    finishExam(false);
+  });
+  host.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function finishExam(timedOut){
+  EXAM.done = true;
+  var right = 0, critMiss = 0;
+  EXAM.qs.forEach(function(q){
+    var ok = q.chosen >= 0 && q.opts[q.chosen].correct;
+    if (ok) right++; else if (q.ref.critical) critMiss++;
+  });
+  var pct = Math.round(right / EXAM.qs.length * 100);
+  S.exam.attempts.push({ at:now(), n:EXAM.qs.length, right:right, pct:pct, timedOut:!!timedOut, critMiss:critMiss });
+  var gated = safetyGate() && critMiss > 0;
+  S.exam.lockUntil = now() + cfg("lockHours")*3600000;
+  save();
+
+  var cut = cfg("cut");
+  var weak = {};
+  EXAM.qs.forEach(function(q){
+    if (!(q.chosen >= 0 && q.opts[q.chosen].correct)){
+      var u = q.ref.unit; weak[u] = (weak[u]||0) + 1;
+    }
+  });
+  var weakList = Object.keys(weak).sort(function(a,b){ return weak[b]-weak[a]; });
+
+  var host = $("#examRunner");
+  host.innerHTML =
+    '<div class="card" style="margin:0">' +
+    '<h3>Attempt ' + S.exam.attempts.length + ' — ' + pct + '%' + (timedOut ? " (time expired)" : "") + '</h3>' +
+    '<p>' + right + ' of ' + EXAM.qs.length + ' correct. Cut score ' + cut + '%. ' +
+    (gated ? '<b style="color:var(--red)">Not counted: ' + critMiss + ' safety-critical item' + (critMiss===1?'':'s') + ' missed.</b> In this module a single safety-critical error means the attempt does not meet the applied criterion, whatever the score.'
+      : (pct >= cut ? '<b style="color:var(--green)">Applied-performance criterion met.</b>'
+                    : '<b style="color:var(--amber)">Not yet — see the remediation plan below.</b>')) + '</p>' +
+    (weakList.length
+      ? '<div class="box pitfall"><h5>Remediation plan</h5><p>Your misses clustered in these units. Re-open them, re-read the flagged sections, and re-answer their checkpoints cold before your next attempt:</p><p>' +
+        weakList.map(function(u){ return '<b>Unit ' + u + '</b> — ' + esc(UNITS[u] ? UNITS[u].title : "") + ' (' + weak[u] + ' missed)'; }).join('<br>') +
+        '</p></div>'
+      : '<div class="box pearl"><h5>Clean sheet</h5><p>No missed items.</p></div>') +
+    '<div class="btnrow"><button class="btn ghost" id="exReview">Review every item with rationales</button></div>' +
+    '</div>';
+
+  $("#exReview").addEventListener("click", function(){
+    var out = EXAM.qs.map(function(q, i){
+      var ok = q.chosen >= 0 && q.opts[q.chosen].correct;
+      var ci = q.opts.map(function(o,k){ return o.correct ? k : -1; }).filter(function(k){ return k>=0; })[0];
+      return '<div class="q"><div class="qh">Item ' + (i+1) + ' · Unit ' + q.ref.unit + (q.ref.critical ? ' · <b>safety-critical</b>' : '') + ' · ' +
+             (ok ? '<span style="color:var(--green)">correct</span>' : '<span style="color:var(--red)">missed</span>') +
+             '</div><p class="stem">' + q.ref.stem + '</p><ol class="opts">' +
+             q.opts.map(function(o,k){
+               var st = o.correct ? ' data-state="right"' : (k===q.chosen ? ' data-state="wrong"' : '');
+               return '<li><span class="opt"' + st + '><span class="k">' + letter(k) + '</span>' + o.html + '</span></li>';
+             }).join("") + '</ol>' +
+             '<div class="rationale">' + q.ref.rationale + '</div></div>';
+    }).join("");
+    var box = el("div", null, '<h3 style="margin-top:1.4em">Item-by-item review</h3>' + out);
+    host.appendChild(box);
+    box.scrollIntoView({behavior:"smooth", block:"start"});
+  });
+
+  refresh();
+}
+
+/* ------------------------------------------------------------------ certificate */
+function certData(){
+  var code = verifyCode();
+  return {
+    name: ($("#certName") && $("#certName").value.trim()) || "Learner",
+    title: cfg("courseTitle"),
+    date: new Date().toLocaleDateString(undefined, {year:"numeric", month:"long", day:"numeric"}),
+    cov: checkpointsOK() + "/" + totalItems(),
+    ret: retainedUnits() + "/" + ORDER.length,
+    exam: bestScore() + "%",
+    cut: cfg("cut") + "%",
+    longest: fmtSpan(longestRetention()),
+    sign: cfg("signName"),
+    role: cfg("signRole"),
+    code: code
+  };
+}
+function verifyCode(){
+  var basis = [ ($("#certName")&&$("#certName").value.trim())||"", checkpointsOK(), retainedUnits(),
+                bestScore(), cfg("cut"), VERSION ].join("|");
+  var h = 2166136261;
+  for (var i=0;i<basis.length;i++){ h ^= basis.charCodeAt(i); h = Math.imul(h, 16777619); }
+  var s = (h >>> 0).toString(36).toUpperCase();
+  while (s.length < 7) s = "0" + s;
+  return MC.codePrefix + "-" + s.slice(0,4) + "-" + s.slice(4,7);
+}
+
+/* ------------------------------------------------------------------ signature image */
+var SIGIMG = null;          // preloaded Image for the canvas certificate
+var SIG_MAX_W = 600;        // px, after downscale
+
+function loadSigImage(cb){
+  var src = cfg("signPhoto");
+  if (!src){ SIGIMG = null; if (cb) cb(); return; }
+  if (SIGIMG && SIGIMG.src === src){ if (cb) cb(); return; }
+  var im = new Image();
+  im.onload  = function(){ SIGIMG = im; if (cb) cb(); };
+  im.onerror = function(){ SIGIMG = null; if (cb) cb(); };
+  im.src = src;
+}
+
+// Ink-on-paper scans arrive opaque. Turn lightness into transparency so only the
+// ink composites onto the certificate; a PNG that already carries alpha is left alone.
+function matteSignature(cv){
+  var x = cv.getContext("2d");
+  var d;
+  try { d = x.getImageData(0, 0, cv.width, cv.height); } catch(e){ return; }
+  var px = d.data, hasAlpha = false;
+  for (var i = 3; i < px.length; i += 4){ if (px[i] < 250){ hasAlpha = true; break; } }
+  if (hasAlpha) return;
+  for (var j = 0; j < px.length; j += 4){
+    var lum = 0.2126*px[j] + 0.7152*px[j+1] + 0.0722*px[j+2];
+    var a = 255 - lum;
+    a = a < 18 ? 0 : Math.min(255, Math.round(a * 1.45));   // drop paper, deepen ink
+    px[j+3] = a;
+  }
+  x.putImageData(d, 0, 0);
+}
+
+function renderSigPreview(){
+  var wrap = $("#sigPrev"), img = $("#sigImg"), meta = $("#sigMeta");
+  if (!wrap) return;
+  var src = cfg("signPhoto");
+  if (!src){ wrap.hidden = true; if (img) img.removeAttribute("src"); return; }
+  wrap.hidden = false;
+  if (img) img.src = src;
+  if (meta) meta.textContent = Math.round(src.length * 0.75 / 1024) + " KB stored in the file";
+}
+
+function wireSignature(){
+  var inp = $("#fPhoto");
+  if (inp) inp.addEventListener("change", function(){
+    var f = inp.files && inp.files[0];
+    if (!f) return;
+    var fr = new FileReader();
+    fr.onload = function(){
+      var im = new Image();
+      im.onload = function(){
+        var scale = Math.min(1, SIG_MAX_W / im.width);
+        var cv = document.createElement("canvas");
+        cv.width  = Math.max(1, Math.round(im.width  * scale));
+        cv.height = Math.max(1, Math.round(im.height * scale));
+        cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+        matteSignature(cv);
+        S.settings = S.settings || {};
+        S.settings.signPhoto = cv.toDataURL("image/png");
+        save();
+        SIGIMG = null;
+        loadSigImage();
+        renderSigPreview();
+        inp.value = "";
+      };
+      im.onerror = function(){ alert("That file could not be read as an image."); inp.value = ""; };
+      im.src = fr.result;
+    };
+    fr.readAsDataURL(f);
+  });
+  var clr = $("#sigClear");
+  if (clr) clr.addEventListener("click", function(){
+    S.settings = S.settings || {};
+    S.settings.signPhoto = "";
+    save(); SIGIMG = null; renderSigPreview();
+  });
+  renderSigPreview();
+  loadSigImage();
+}
+
+function drawCert(){
+  var d = certData();
+  var W = 2400, H = 1697;
+  var cv = $("#certCanvas"); cv.width = W; cv.height = H;
+  var x = cv.getContext("2d");
+
+  x.fillStyle = "#fdfcfa"; x.fillRect(0,0,W,H);
+  x.strokeStyle = "#0d6e66"; x.lineWidth = 10; x.strokeRect(52,52,W-104,H-104);
+  x.lineWidth = 2; x.strokeRect(78,78,W-156,H-156);
+
+  x.textAlign = "center";
+  x.fillStyle = "#0d6e66";
+  x.font = "700 40px Georgia, serif";
+  x.fillText("VIKKYPAEDIA · PAEDIATRIC MEDICAL EDUCATION", W/2, 190);
+
+  x.fillStyle = "#333";
+  x.font = "400 44px Georgia, serif";
+  x.fillText("certifies that", W/2, 330);
+
+  x.fillStyle = "#12151a";
+  x.font = "600 108px Georgia, serif";
+  x.fillText(d.name, W/2, 460);
+  x.strokeStyle = "#999"; x.lineWidth = 2;
+  var tw = Math.min(W-400, x.measureText(d.name).width + 200);
+  x.beginPath(); x.moveTo(W/2 - tw/2, 495); x.lineTo(W/2 + tw/2, 495); x.stroke();
+
+  x.fillStyle = "#333"; x.font = "400 44px Georgia, serif";
+  x.fillText("has demonstrated mastery in", W/2, 585);
+  x.fillStyle = "#0d6e66"; x.font = "600 76px Georgia, serif";
+  x.fillText(d.title, W/2, 680);
+  x.fillStyle = "#444"; x.font = "400 34px Georgia, serif";
+  x.fillText(MC.alignedTo, W/2, 736);
+
+  // evidence table
+  var rows = [
+    ["Coverage — checkpoint items mastered", d.cov],
+    ["Retention — units evidenced ≥24 h after first pass", d.ret],
+    ["Applied performance — closed-book integrated assessment", d.exam + "  (cut " + d.cut + ")"],
+    ["Longest demonstrated retention interval", d.longest]
+  ];
+  x.textAlign = "left";
+  var y = 840;
+  rows.forEach(function(r){
+    x.fillStyle = "#555"; x.font = "400 32px Georgia, serif";
+    x.fillText(r[0], 300, y);
+    x.fillStyle = "#12151a"; x.font = "600 32px Georgia, serif";
+    x.textAlign = "right"; x.fillText(r[1], W-300, y); x.textAlign = "left";
+    x.strokeStyle = "#ddd"; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(300, y+16); x.lineTo(W-300, y+16); x.stroke();
+    y += 62;
+  });
+
+  // signature
+  x.textAlign = "center";
+  if (SIGIMG && SIGIMG.width){
+    // signature sits on the rule; the printed name and role go beneath it
+    var maxW = 680, maxH = 120;
+    var sc = Math.min(maxW / SIGIMG.width, maxH / SIGIMG.height);
+    var sw = SIGIMG.width * sc, sh = SIGIMG.height * sc;
+    x.drawImage(SIGIMG, W/2 - sw/2, 1196 - sh, sw, sh);
+  }
+  x.strokeStyle = "#999"; x.lineWidth = 2;
+  x.beginPath(); x.moveTo(W/2-360, 1204); x.lineTo(W/2+360, 1204); x.stroke();
+  x.fillStyle = "#12151a"; x.font = "600 38px Georgia, serif";
+  x.fillText(d.sign, W/2, 1252);
+  x.fillStyle = "#555"; x.font = "400 30px Georgia, serif";
+  x.fillText(d.role, W/2, 1296);
+
+  x.fillStyle = "#666"; x.font = "400 28px Georgia, serif";
+  x.fillText("Issued " + d.date + "   ·   Verification code " + d.code + "   ·   Module v" + VERSION, W/2, 1360);
+
+  // scope statement
+  x.fillStyle = "#555"; x.font = "400 23px Georgia, serif";
+  var scope = MC.certScopeLines;
+  scope.forEach(function(line, i){ x.fillText(line, W/2, 1470 + i*34); });
+
+  $("#certWrap").hidden = false;
+  buildPrintSheet(d);
+}
+
+function buildPrintSheet(d){
+  $("#printRoot").innerHTML =
+    '<div class="cert-sheet">' +
+    '<p class="meta">VIKKYPAEDIA · PAEDIATRIC MEDICAL EDUCATION</p>' +
+    '<h1>Certificate of Mastery</h1>' +
+    '<p>certifies that</p><p class="cn">' + esc(d.name) + '</p>' +
+    '<p>has demonstrated mastery in <b>' + esc(d.title) + '</b>, ' + esc(MC.alignedTo) + '.</p>' +
+    '<table><tbody>' +
+      '<tr><td>Coverage — checkpoint items mastered</td><td align="right"><b>' + d.cov + '</b></td></tr>' +
+      '<tr><td>Retention — units evidenced ≥24 h after first pass</td><td align="right"><b>' + d.ret + '</b></td></tr>' +
+      '<tr><td>Applied performance — closed-book integrated assessment</td><td align="right"><b>' + d.exam + '</b> (cut ' + d.cut + ')</td></tr>' +
+      '<tr><td>Longest demonstrated retention interval</td><td align="right"><b>' + d.longest + '</b></td></tr>' +
+    '</tbody></table>' +
+    (cfg("signPhoto") ? '<img class="sig" src="' + cfg("signPhoto") + '" alt="">' : '') +
+    '<p style="margin-top:2mm"><b>' + esc(d.sign) + '</b><br>' + esc(d.role) + '</p>' +
+    '<p class="meta">Issued ' + d.date + ' · Verification code ' + d.code + ' · Module v' + VERSION + '</p>' +
+    '<p class="scope">' + esc(MC.certScopeLines.join(' ')) + '</p>' +
+    '</div>';
+}
+
+/* ------------------------------------------------------------------ faculty settings + export */
+function wireFaculty(){
+  var s = S.settings || {};
+  var map = { fCut:"cut", fItems:"items", fMin:"minutes", fAtt:"attempts", fLock:"lockHours",
+              fRet:"retainUnits", fName:"signName", fRole:"signRole", fTitle:"courseTitle" };
+  Object.keys(map).forEach(function(id){
+    var n = document.getElementById(id); if (!n) return;
+    n.value = (s[map[id]] != null) ? s[map[id]] : DEFAULTS[map[id]];
+    n.addEventListener("change", function(){
+      S.settings = S.settings || {};
+      var v = n.value;
+      if (["cut","items","minutes","attempts","lockHours","retainUnits"].indexOf(map[id]) >= 0) v = parseInt(v,10) || DEFAULTS[map[id]];
+      S.settings[map[id]] = v;
+      save(); refresh();
+    });
+  });
+  var ex = $("#exportCopy");
+  if (ex) ex.addEventListener("click", exportConfigured);
+  var er = $("#eraseAll");
+  if (er) er.addEventListener("click", function(){
+    if (!confirm("Erase ALL progress, answers, retention history and exam attempts from this browser? This cannot be undone.")) return;
+    try{ localStorage.removeItem(STORE_KEY); } catch(e){}
+    location.reload();
+  });
+}
+
+function exportConfigured(){
+  var doc = document.documentElement.cloneNode(true);
+  // strip everything the engine injected at runtime
+  [".lock-note", ".part-status", ".scroll-hint", ".remed", ".verdict", ".conf", ".cw-flag", ".printbtn", ".burst"].forEach(function(sel){
+    $$(sel, doc).forEach(function(n){ n.remove(); });
+  });
+  $$(".q", doc).forEach(function(q){
+    $$(".opt", q).forEach(function(b){ b.removeAttribute("data-state"); b.removeAttribute("disabled");
+      var k = $(".k", b); if (k) k.remove(); });
+    $$(".hint", q).forEach(function(h){ h.setAttribute("hidden",""); });
+    var rat = $(".rationale", q); if (rat) rat.setAttribute("hidden","");
+    var hb = $(".hint-btn", q); if (hb){ hb.removeAttribute("disabled"); hb.textContent = "Need a hint?"; }
+  });
+  ["#ugrid","#tocDesk","#tocMobile","#retSlot","#printRoot","#printDoc","#toastHost","#rvwSlot","#dayStrip","#liveRegion","#examRunner","#examHistory","#criteria","#certWrap"]
+    .forEach(function(sel){ var n = $(sel, doc); if (n){ n.innerHTML = ""; } });
+  $$(".unit", doc).forEach(function(u){
+    u.setAttribute("data-open","0"); u.setAttribute("data-locked","0");
+    var b = $(".unit-body", u); if (b) b.setAttribute("hidden","");
+    var h = $(".unit-head", u); if (h) h.setAttribute("aria-expanded","false");
+  });
+  $$(".appendix", doc).forEach(function(a){
+    a.setAttribute("data-open","0");
+    var b = $(".app-body", a); if (b) b.setAttribute("hidden","");
+  });
+  var rc = $("#retentionCard", doc); if (rc) rc.setAttribute("hidden","");
+  ["#dueBtn","#rvw","#enPassport"].forEach(function(sel){ var n = $(sel, doc); if (n) n.setAttribute("hidden",""); });
+  $$(".q", doc).forEach(function(q){ q.removeAttribute("data-conf"); });
+  doc.classList.remove("printing-doc");
+  var pr = $("#placeResult", doc); if (pr){ pr.setAttribute("hidden",""); pr.innerHTML=""; }
+  $$(".place-opts button", doc).forEach(function(b){ b.setAttribute("aria-pressed","false"); });
+  var cw = $("#certWrap", doc); if (cw) cw.setAttribute("hidden","");
+  var cg = $("#certGate", doc); if (cg) cg.setAttribute("hidden","");
+  // the exported copy must start as a fresh enrolment for whoever opens it
+  var ob = $("#onb", doc); if (ob) ob.setAttribute("hidden","");
+  $$("#onb input", doc).forEach(function(i){ i.removeAttribute("value"); });
+  var pb = $("#profileBar", doc);
+  if (pb){ pb.setAttribute("hidden","");
+    ["#pbInitials","#pbName","#pbMeta","#pbPlan"].forEach(function(sel){
+      var n = $(sel, doc); if (n) n.textContent = ""; }); }
+  ["#planScope","#planHours","#planWeeks","#planDate"].forEach(function(sel){
+    var n = $(sel, doc); if (n) n.innerHTML = "&mdash;"; });
+  var op = $("#onbPath", doc); if (op) op.innerHTML = "";
+  $$(".fig-svg", doc).forEach(function(n){ n.innerHTML = ""; n.removeAttribute("tabindex"); });
+  var fzb = $("#figZoomBody", doc); if (fzb) fzb.innerHTML = "";
+  var fzo = $("#figZoom", doc); if (fzo) fzo.setAttribute("hidden","");
+  var ce = $("#certName", doc); if (ce) ce.removeAttribute("value");
+  var sp = $("#sigPrev", doc); if (sp) sp.setAttribute("hidden","");
+  var si = $("#sigImg", doc);  if (si) si.removeAttribute("src");
+  var sm = $("#sigMeta", doc); if (sm) sm.textContent = "";
+
+  // seed faculty settings into the exported copy
+  var seed = doc.ownerDocument.createElement("script");
+  seed.textContent = "window.__VKP_SEED__=" + JSON.stringify(S.settings || {}) + ";";
+  var head = $("head", doc);
+  head.appendChild(seed);
+
+  var html = "<!DOCTYPE html>\n" + doc.outerHTML;
+  var blob = new Blob([html], {type:"text/html"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = MC.slug + "-configured.html";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+
+/* ------------------------------------------------------------------ search */
+var SIDX = null, SRES = [], SSEL = 0, SDEB = null;
+
+/* Blocks that would give away an answer are deliberately not indexed:
+   option lists, rationales, hints and remediation notes. Question stems are
+   indexed, because finding the question you half remember is useful and the
+   stem alone reveals nothing. */
+var SKIP_SEL = ".opts, .rationale, .hint, .remed, .fig-alt, .mastery-badge, .lock-note, .verdict";
+var TAKE_SEL = "p, li, h4, h5, td, th, .stem, .algo-t, .fig-t, caption";
+
+function buildSearchIndex(){
+  if (SIDX) return SIDX;
+  SIDX = [];
+  function harvest(scope, where){
+    $$(TAKE_SEL, scope).forEach(function(el){
+      if (el.closest(SKIP_SEL)) return;
+      var t = (el.textContent || "").replace(/\s+/g, " ").trim();
+      if (t.length < 14 || t.length > 900) return;
+      SIDX.push({ t: t, lc: t.toLowerCase(), el: el, w: where,
+                  head: /^H[45]$/.test(el.tagName) || el.classList.contains("fig-t") });
+    });
+  }
+  $$(".unit").forEach(function(sec){
+    var n = parseInt(sec.getAttribute("data-unit"), 10);
+    harvest(sec, { kind:"unit", n:n, part:partOf(n),
+                   title:"Unit " + n + " · " + (sec.getAttribute("data-title") || "") });
+  });
+  $$(".appendix").forEach(function(sec){
+    var h = $("h3", sec);
+    var label = "Appendix";
+    if (h){
+      var hc = h.cloneNode(true);
+      $$(".caret, .app-open-note", hc).forEach(function(x){ x.remove(); });
+      label = hc.textContent.replace(/\s+/g, " ").trim();
+    }
+    harvest(sec, { kind:"app", id:sec.id, title:label });
+  });
+  return SIDX;
+}
+
+function snippet(rec, terms){
+  var lc = rec.lc, at = -1;
+  for (var i=0;i<terms.length;i++){ var k = lc.indexOf(terms[i]); if (k >= 0 && (at < 0 || k < at)) at = k; }
+  if (at < 0) at = 0;
+  var from = Math.max(0, at - 55), to = Math.min(rec.t.length, from + 190);
+  var raw = (from > 0 ? "…" : "") + rec.t.slice(from, to) + (to < rec.t.length ? "…" : "");
+  var out = esc(raw);
+  terms.forEach(function(term){
+    if (!term) return;
+    var re = new RegExp("(" + term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "ig");
+    out = out.replace(re, "<mark>$1</mark>");
+  });
+  return out;
+}
+
+function runSearch(q){
+  var host = $("#srchResults"), count = $("#srchCount");
+  q = (q || "").trim();
+  SRES = []; SSEL = 0;
+  if (q.length < 2){
+    host.innerHTML = "";
+    count.textContent = "Type to search — doses, thresholds, a phrase you half remember.";
+    return;
+  }
+  var terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+  var idx = buildSearchIndex(), hits = [];
+  for (var i=0;i<idx.length;i++){
+    var rec = idx[i], ok = true, score = 0;
+    for (var j=0;j<terms.length;j++){
+      var at = rec.lc.indexOf(terms[j]);
+      if (at < 0){ ok = false; break; }
+      score += (at === 0 ? 6 : at < 60 ? 3 : 1);
+    }
+    if (!ok) continue;
+    if (rec.head) score += 8;
+    if (rec.w.kind === "unit" && isLocked(rec.w.n)) score -= 4;
+    hits.push({ rec: rec, score: score });
+  }
+  hits.sort(function(a,b){ return b.score - a.score; });
+  SRES = hits.slice(0, 40);
+
+  if (!SRES.length){
+    host.innerHTML = '<div class="srch-empty">Nothing matches <b>' + esc(q) + '</b>.<br>' +
+      'Try a single distinctive word — <i>meconium</i>, <i>epinephrine</i>, <i>hypothermia</i>.</div>';
+    count.textContent = "0 results";
+    return;
+  }
+  host.innerHTML = SRES.map(function(h, i){
+    var w = h.rec.w, locked = (w.kind === "unit") && isLocked(w.n);
+    var body = locked
+      ? '<div class="sr-note">In a locked unit — open Part ' + w.part + ' to read it.</div>'
+      : '<div class="sr-txt">' + snippet(h.rec, terms) + '</div>';
+    return '<button type="button" class="sr" role="option" data-i="' + i + '"' +
+      (w.part ? ' data-part="' + w.part + '"' : '') +
+      ' aria-selected="' + (i === 0 ? "true" : "false") + '">' +
+      '<span class="sr-where">' + esc(w.title) +
+      (locked ? ' <span class="sr-lock">Locked</span>' : '') + '</span>' + body + '</button>';
+  }).join("");
+  count.textContent = SRES.length + (SRES.length === 1 ? " result" : " results") +
+    (hits.length > SRES.length ? " (of " + hits.length + ")" : "");
+  $$(".sr", host).forEach(function(b){
+    b.addEventListener("click", function(){ gotoResult(parseInt(b.getAttribute("data-i"), 10)); });
+  });
+}
+
+function moveSel(d){
+  if (!SRES.length) return;
+  var items = $$(".sr", $("#srchResults"));
+  items[SSEL] && items[SSEL].setAttribute("aria-selected","false");
+  SSEL = (SSEL + d + items.length) % items.length;
+  var el = items[SSEL];
+  el.setAttribute("aria-selected","true");
+  el.scrollIntoView({ block:"nearest" });
+}
+
+function gotoResult(i){
+  var h = SRES[i]; if (!h) return;
+  var w = h.rec.w;
+  closeSearch();
+  if (w.kind === "unit"){
+    if (isLocked(w.n)){ goUnit(w.n); return; }
+    toggleUnit(UNITS[w.n].node, true);
+  } else {
+    var sec = document.getElementById(w.id);
+    if (sec && sec.getAttribute("data-open") !== "1") toggleApp(sec);
+  }
+  var el = h.rec.el;
+  setTimeout(function(){
+    el.scrollIntoView({ behavior:"smooth", block:"center" });
+    el.classList.remove("srch-hit");
+    void el.offsetWidth;
+    el.classList.add("srch-hit");
+    setTimeout(function(){ el.classList.remove("srch-hit"); }, 2000);
+  }, 60);
+}
+
+function openSearch(seed){
+  var o = $("#srch"); if (!o) return;
+  o.hidden = false;
+  document.body.style.overflow = "hidden";
+  var inp = $("#srchInput");
+  if (seed != null) inp.value = seed;
+  inp.focus(); inp.select();
+  runSearch(inp.value);
+}
+function closeSearch(){
+  var o = $("#srch"); if (!o || o.hidden) return;
+  o.hidden = true;
+  document.body.style.overflow = "";
+}
+function wireSearch(){
+  var o = $("#srch"); if (!o) return;
+  var inp = $("#srchInput");
+  inp.addEventListener("input", function(){
+    clearTimeout(SDEB);
+    SDEB = setTimeout(function(){ runSearch(inp.value); }, 110);
+  });
+  inp.addEventListener("keydown", function(e){
+    if (e.key === "ArrowDown"){ e.preventDefault(); moveSel(1); }
+    else if (e.key === "ArrowUp"){ e.preventDefault(); moveSel(-1); }
+    else if (e.key === "Enter"){ e.preventDefault(); gotoResult(SSEL); }
+  });
+  $("#srchClose").addEventListener("click", closeSearch);
+  o.addEventListener("click", function(e){ if (e.target === o) closeSearch(); });
+  var sb = $("#searchBtn"); if (sb) sb.addEventListener("click", function(){ openSearch(); });
+
+  document.addEventListener("keydown", function(e){
+    var tag = (e.target && e.target.tagName) || "";
+    var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(tag) || (e.target && e.target.isContentEditable);
+    if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)){
+      e.preventDefault(); $("#srch").hidden ? openSearch() : closeSearch(); return;
+    }
+    if (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey){
+      if (!$("#onb").hidden || !$("#srch").hidden) return;
+      e.preventDefault(); openSearch(); return;
+    }
+    if (e.key === "Escape") closeSearch();
+  });
+}
+
+/* ------------------------------------------------------------------ figures */
+var FIGPAD = 14, FIGGAP = 34, FIGLH = 18, FIGFS = 13.5;
+var figMeasure = null;
+
+function measureText(t, weight){
+  if (!figMeasure){
+    var c = document.createElement("canvas");
+    figMeasure = c.getContext("2d");
+  }
+  figMeasure.font = (weight || 400) + " " + FIGFS + "px " +
+    getComputedStyle(document.body).fontFamily;
+  return figMeasure.measureText(t).width;
+}
+function wrapText(t, maxW, weight){
+  var words = String(t).split(/\s+/), lines = [], cur = "";
+  for (var i=0;i<words.length;i++){
+    var probe = cur ? cur + " " + words[i] : words[i];
+    if (cur && measureText(probe, weight) > maxW){ lines.push(cur); cur = words[i]; }
+    else cur = probe;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+function nodeHeight(n, w){
+  var inner = w - FIGPAD*2;
+  var h = FIGPAD;
+  h += wrapText(n.t, inner, 700).length * (FIGLH + 2);
+  (n.l || []).forEach(function(line){ h += wrapText(line, inner, 400).length * FIGLH; });
+  if (n.l && n.l.length) h += 4;
+  return h + FIGPAD;
+}
+function figNodeSVG(n, x, y, w, h){
+  var inner = w - FIGPAD*2, out = [];
+  out.push('<g class="fn fn-' + n.k + '">');
+  out.push('<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h +
+           '" rx="' + (n.k === "ask" ? 18 : 10) + '"/>');
+  var ty = y + FIGPAD + FIGLH - 4;
+  wrapText(n.t, inner, 700).forEach(function(line){
+    out.push('<text class="ft" x="' + (x + FIGPAD) + '" y="' + ty + '">' + esc(line) + '</text>');
+    ty += FIGLH + 2;
+  });
+  if (n.l && n.l.length) ty += 2;
+  (n.l || []).forEach(function(src){
+    wrapText(src, inner, 400).forEach(function(line){
+      out.push('<text class="fl" x="' + (x + FIGPAD) + '" y="' + ty + '">' + esc(line) + '</text>');
+      ty += FIGLH;
+    });
+  });
+  out.push('</g>');
+  return out.join("");
+}
+function figSVG(spec){
+  var MW = spec.main, SW = spec.side || 0, W = spec.w;
+  var pos = {}, parts = [], y = 6, maxY = 0;
+
+  // place
+  spec.nodes.forEach(function(n){
+    var w = n.side ? SW : MW;
+    var h = nodeHeight(n, w);
+    if (n.side){
+      var a = pos[n.from];
+      var ny = a ? a.y + a.h + 14 : y;
+      pos[n.id] = { x: W - SW - 6, y: ny, w: w, h: h, n: n };
+    } else {
+      pos[n.id] = { x: 6, y: y, w: w, h: h, n: n };
+      y += h + FIGGAP;
+    }
+    maxY = Math.max(maxY, pos[n.id].y + h);
+  });
+
+  // arrows between consecutive main nodes
+  var mains = spec.nodes.filter(function(n){ return !n.side; });
+  for (var i=0;i<mains.length-1;i++){
+    var a = pos[mains[i].id], b = pos[mains[i+1].id];
+    var cx = a.x + a.w/2;
+    parts.push('<path class="fe" d="M' + cx + ' ' + (a.y+a.h) + ' V' + (b.y-7) + '" marker-end="url(#fa)"/>');
+    var lab = mains[i+1].edge, tag = mains[i+1].tag;
+    if (lab) parts.push('<text class="fedge" x="' + (cx+8) + '" y="' + (a.y+a.h+16) + '">' + esc(lab) + '</text>');
+    if (tag) parts.push('<text class="ftag" x="' + (cx+8) + '" y="' + (b.y-10) + '">' + esc(tag) + '</text>');
+  }
+  // elbows to side nodes
+  spec.nodes.forEach(function(n){
+    if (!n.side) return;
+    var a = pos[n.from], b = pos[n.id];
+    if (!a) return;
+    var sy = a.y + a.h/2, ey = b.y + Math.min(24, b.h/2);
+    parts.push('<path class="fe" d="M' + (a.x+a.w) + ' ' + sy + ' H' + (b.x-26) +
+               ' V' + ey + ' H' + (b.x-7) + '" marker-end="url(#fa)"/>');
+    if (n.edge){
+      var lines = wrapText(n.edge, SW, 400);
+      lines.forEach(function(line, k){
+        parts.push('<text class="fedge" x="' + (a.x+a.w+10) + '" y="' + (sy - 8 + k*14) + '">' + esc(line) + '</text>');
+      });
+    }
+  });
+  // nodes last so they sit above the lines
+  spec.nodes.forEach(function(n){
+    var p = pos[n.id];
+    parts.push(figNodeSVG(n, p.x, p.y, p.w, p.h));
+  });
+
+  var H = maxY + 10;
+  return '<svg class="figsvg" viewBox="0 0 ' + W + ' ' + H + '" role="img" ' +
+         'preserveAspectRatio="xMidYMin meet" xmlns="http://www.w3.org/2000/svg">' +
+         '<defs><marker id="fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" ' +
+         'markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker></defs>' +
+         parts.join("") + '</svg>';
+}
+function renderFigures(){
+  $$(".fig-svg[data-figspec]").forEach(function(host){
+    var key = host.getAttribute("data-figspec");
+    var spec = (typeof FIGS !== "undefined") && FIGS[key];
+    if (!spec){ host.hidden = true; return; }
+    host.innerHTML = figSVG(spec);
+    var svg = $("svg", host);
+    var fig = host.closest(".fig");
+    var cap = fig && $(".fig-t", fig);
+    if (svg && cap) svg.setAttribute("aria-label", cap.textContent.trim() + " — a text version follows the diagram");
+    host.setAttribute("tabindex","0");
+    host.setAttribute("role","button");
+    host.setAttribute("aria-label","Open " + (cap ? cap.textContent.trim() : "diagram") + " full screen");
+    host.addEventListener("click", function(){ openFig(host); });
+    host.addEventListener("keydown", function(e){
+      if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openFig(host); }
+    });
+  });
+}
+function openFig(host){
+  var o = $("#figZoom"); if (!o) return;
+  var fig = host.closest(".fig"), cap = fig && $(".fig-t", fig);
+  $("#figZoomTitle").textContent = cap ? cap.textContent.trim() : "Diagram";
+  $("#figZoomBody").innerHTML = host.innerHTML;
+  o.hidden = false;
+  document.body.style.overflow = "hidden";
+  $("#figZoomClose").focus();
+}
+function closeFig(){
+  var o = $("#figZoom"); if (!o || o.hidden) return;
+  o.hidden = true; $("#figZoomBody").innerHTML = "";
+  document.body.style.overflow = "";
+}
+
+/* ------------------------------------------------------------------ tables */
+function injectTableLabels(){
+  $$("table.reflow").forEach(function(t){
+    var heads = $$("thead th", t).map(function(th){ return th.textContent.trim(); });
+    $$("tbody tr", t).forEach(function(tr){
+      $$("td", tr).forEach(function(td, i){ if (heads[i]) td.setAttribute("data-label", heads[i]); });
+    });
+  });
+  $$(".tw").forEach(function(w){
+    w.setAttribute("tabindex","0"); w.setAttribute("role","region");
+    var t = $("table", w);
+    if (t && !w.getAttribute("aria-label")){
+      var cap = $("caption", t);
+      w.setAttribute("aria-label", cap ? cap.textContent.trim() : "Table");
+    }
+  });
+  $$(".algo").forEach(function(a){ a.setAttribute("tabindex","0"); a.setAttribute("role","region");
+    var t = $(".algo-t", a); a.setAttribute("aria-label", t ? t.textContent.trim() : "Algorithm"); });
+}
+
+/* ------------------------------------------------------------------ drawer */
+function openDrawer(){ $("#drawer").setAttribute("data-open","1"); $("#drawerOpen").setAttribute("aria-expanded","true"); $("#drawerClose").focus(); }
+function closeDrawer(){ var d=$("#drawer"); if(!d) return; d.setAttribute("data-open","0"); var o=$("#drawerOpen"); if(o) o.setAttribute("aria-expanded","false"); }
+
+/*@@LOOPS@@*/
+
+/* ------------------------------------------------------------------ refresh */
+var refreshT = null;
+function refresh(){
+  clearTimeout(refreshT);
+  refreshT = setTimeout(function(){
+    renderUnitChrome();
+    renderPartStatus();
+    renderDashboard();
+    renderTOC();
+    renderRetention();
+    renderCriteria();
+    renderProfileBar();
+    renderLoops();
+  }, 30);
+}
+
+/* ------------------------------------------------------------------ boot */
+function boot(){
+  load();
+  buildRegistry();
+  applyPrefs();
+
+  $$(".unit").forEach(function(sec){
+    var head = $(".unit-head", sec), body = $(".unit-body", sec);
+    var n = sec.getAttribute("data-unit");
+    body.id = "u" + n + "-body";
+    head.setAttribute("aria-controls", body.id);
+    head.setAttribute("aria-expanded","false");
+    body.hidden = true;
+    sec.setAttribute("data-open","0");
+    wireAccordion(head, sec, "unit");
+  });
+  $$(".appendix").forEach(function(sec){
+    var head = $("h3", sec), body = $(".app-body", sec);
+    body.id = sec.id + "-body";
+    head.setAttribute("aria-controls", body.id);
+    head.setAttribute("aria-expanded","false");
+    body.hidden = true;
+    sec.setAttribute("data-open","0");
+    wireAccordion(head, sec, "app");
+  });
+  $$(".q").forEach(wireQuestion);
+
+  wirePrefs();
+  wirePlacement();
+  wireFaculty();
+  wireSignature();
+  wireOnboarding();
+  wireSearch();
+  wireLoops();
+  renderFigures();
+  injectTableLabels();
+
+  var dOpen = $("#drawerOpen"); if (dOpen) dOpen.addEventListener("click", openDrawer);
+  var dClose = $("#drawerClose"); if (dClose) dClose.addEventListener("click", closeDrawer);
+  var fz = $("#figZoom");
+  if (fz){
+    $("#figZoomClose").addEventListener("click", closeFig);
+    fz.addEventListener("click", function(e){ if (e.target === fz) closeFig(); });
+  }
+  var drawer = $("#drawer");
+  if (drawer) drawer.addEventListener("click", function(e){ if (e.target === drawer) closeDrawer(); });
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape"){ closeFig(); closeDrawer(); } });
+
+  $("#continueBtn").addEventListener("click", function(){
+    var n = null;
+    if (S.lastUnit){ var k = parseInt(S.lastUnit.replace("u",""),10); if (UNITS[k] && !isLocked(k)) n = k; }
+    if (n == null) n = ORDER.filter(function(u){ return !isLocked(u) && !unitMastered(u); })[0];
+    if (n == null) n = ORDER.filter(function(u){ return !isLocked(u); }).pop();
+    if (n != null) goUnit(n);
+  });
+  $("#expandAll").addEventListener("click", function(){
+    ORDER.forEach(function(n){ if (!isLocked(n)) toggleUnit(UNITS[n].node, true); });
+  });
+  $("#collapseAll").addEventListener("click", function(){
+    ORDER.forEach(function(n){ toggleUnit(UNITS[n].node, false); });
+  });
+
+  var se = $("#startExam"); if (se) se.addEventListener("click", startExam);
+  var mc = $("#makeCert");  if (mc) mc.addEventListener("click", function(){ loadSigImage(drawCert); });
+  var dl = $("#dlCert");    if (dl) dl.addEventListener("click", function(){
+    var cv = $("#certCanvas");
+    var a = document.createElement("a");
+    a.download = "vikkypaedia-" + MC.slug + "-certificate.png";
+    a.href = cv.toDataURL("image/png");
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  var pc = $("#printCert"); if (pc) pc.addEventListener("click", function(){ loadSigImage(function(){ drawCert(); setTimeout(function(){ window.print(); }, 160); }); });
+  var dr = $("#dlRecord"); if (dr) dr.addEventListener("click", downloadRecord);
+
+  var vs = $("#verStamp");
+  if (vs) vs.textContent = "Module version " + VERSION + " · built " + BUILD +
+    " · single self-contained file, " + totalItems() + " checkpoint items across " + ORDER.length + " units.";
+
+  // deep link
+  if (location.hash && /^#u\d+$/.test(location.hash)){
+    var k2 = parseInt(location.hash.replace("#u",""),10);
+    setTimeout(function(){ if (UNITS[k2]) goUnit(k2); }, 200);
+  }
+
+  refresh();
+  setInterval(function(){ renderRetention(); renderDashboard(); }, 60000);
+
+  renderProfileBar();
+  if (!S.onboarded) openOnboarding(1);
+}
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+else boot();
+
+})();
+</script>
+</body>
+</html>

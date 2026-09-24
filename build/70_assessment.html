@@ -1,0 +1,115 @@
+<section class="part" id="assessment">
+  <div class="part-head">
+    <div>
+      <span class="pk">Assessment</span>
+      <h2>Final assessment and certificate</h2>
+    </div>
+    <span class="part-meta">Three independent criteria</span>
+  </div>
+  <p class="part-lede">A single score is not a defensible basis for a high-stakes decision about a clinician. This module certifies on three independent criteria, each measuring something the others cannot.</p>
+
+  <div class="card">
+    <h3>Where you stand</h3>
+    <div class="exam-grid" id="criteria"></div>
+    <p class="dash-status" style="margin-top:.4em">
+      <b>Coverage</b> asks whether you have met every unit. <b>Retention</b> asks whether the learning survived a night's sleep — it counts <i>breadth across units</i>, not raw items, because a raw count can be satisfied entirely from the units you met first, leaving the newest and most fragile learning untested. <b>Applied performance</b> asks whether you can integrate across units under closed-book conditions.
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>The closed-book integrated assessment</h3>
+    <ul>
+      <li><b>50 items</b> sampled from a pool of 70 — your 40 unit checkpoints plus 30 fresh integrative items written for this assessment only.</li>
+      <li><b>Item and option order randomised</b> on every attempt, so two attempts are never the same paper and answer-position memory is worthless.</li>
+      <li><b>75 minutes</b>, no hints, no rationales, no feedback until you submit. You may move back and forth and change answers.</li>
+      <li><b>Two attempts</b>, with a <b>24-hour lock</b> between them — deliberately, so that the gap is filled by remediation and sleep rather than by immediate re-guessing.</li>
+      <li><b>Cut score 80%.</b> Shipped labelled <b>provisional</b> — see the note below and the standard-setting worksheets in Appendix C.</li>
+      <li>On submission you get a per-unit <b>remediation plan</b> built from your actual misses, and an item-by-item review with full rationales.</li>
+    </ul>
+    <p class="dash-status" id="examState">—</p>
+    <div class="btnrow">
+      <button class="btn" id="startExam">Start an attempt</button>
+    </div>
+    <div id="examHistory" style="margin-top:1em"></div>
+    <div class="exam-runner" id="examRunner" hidden></div>
+  </div>
+
+  <div class="card">
+    <h3>If you do not reach the cut score</h3>
+    <p>This is designed to be recoverable, not punitive. In order:</p>
+    <ol>
+      <li><b>Read the remediation plan</b> printed after your attempt. It names the units your misses clustered in, ranked.</li>
+      <li><b>Re-open those units and re-answer their checkpoints cold.</b> Do not skim the prose first — attempt the questions, fail them if you are going to, and let the rationale teach you. Retrieval before re-reading is worth several passive re-readings.</li>
+      <li><b>Use the hints deliberately.</b> A hinted item stays in the first spaced-retrieval box, so it will come back tomorrow and the day after until you own it.</li>
+      <li><b>Work the key-feature problems in Appendix A.</b> They test the same decisions in an open-response format, which exposes gaps that multiple choice hides.</li>
+      <li><b>Sleep on it.</b> The 24-hour lock is not an obstacle; it is part of the intervention.</li>
+    </ol>
+    <p>If after two attempts you are still short, ask your faculty to reset your attempts from the panel below. There is no limit on learning, only on how many attempts count toward one certificate.</p>
+    <div class="box evidence">
+      <h5>On the cut score — read this before you defend it to anyone</h5>
+      <p>A cut score chosen by preference is the weakest defensible option available. Published comparisons of standard-setting methods applied to the <i>same</i> assessment have produced cut scores ranging from roughly 66% to 86% — which means the method you choose can matter more than the candidates' performance. This module therefore ships its cut score as <b>provisional</b>, and Appendix C provides modified Angoff, Ebel and Hofstee worksheets plus borderline-regression guidance so your institution can set a defensible one for your own cohort before using this for any consequential decision.</p>
+    </div>
+  </div>
+
+  <div class="card" id="certNotReady">
+    <h3>Certificate</h3>
+    <p>The certificate becomes available when all three criteria above are met. That is deliberate: it is what lets the certificate say something specific rather than something vague.</p>
+  </div>
+
+  <div class="card" id="certGate" hidden>
+    <h3>Your certificate</h3>
+    <p>All three criteria are met. Enter the name exactly as you want it printed.</p>
+    <div class="fset">
+      <div>
+        <label for="certName">Full name</label>
+        <input type="text" id="certName" placeholder="e.g. Dr Ananya Raghavan" autocomplete="name">
+      </div>
+    </div>
+    <div class="btnrow">
+      <button class="btn" id="makeCert">Generate certificate</button>
+      <button class="btn ghost" id="dlCert">Download PNG</button>
+      <button class="btn ghost" id="printCert">Print / save as PDF</button>
+      <button class="btn ghost" id="dlRecord">Download completion record</button>
+    </div>
+    <p class="dash-status" style="margin-top:.6em">The <b>completion record</b> is a small JSON file holding your details, your three criteria and the verification code. Send it to your faculty; they can open it in <code>verify.html</code> alongside this module to read it back and check the figures have not been altered in transit. It is <b>self-attested</b> &mdash; generated on your own device &mdash; so treat it as a signed statement from you, not as proof issued by a third party.</p>
+    <div class="cert-preview" id="certWrap" hidden style="margin-top:1em">
+      <canvas id="certCanvas" width="2400" height="1697" aria-label="Certificate preview"></canvas>
+    </div>
+    <div class="box pitfall" style="margin-top:1em">
+      <h5>What this certificate does and does not say</h5>
+      <p>It attests <b>knowledge and clinical reasoning demonstrated by written assessment</b>. It does <b>not</b> attest bedside competence, confers no licence or clinical privilege, and is not a substitute for supervised, hands-on, instructor-led resuscitation training. It is not the AHA PALS course and confers no PALS provider status. No CME credit unless separately accredited by your institution. The verification code is a deterministic hash of the displayed figures — it is <b>re-derivable, not tamper-proof</b>, and should be treated as a convenience for checking transcription, not as a security feature.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Faculty settings</h3>
+    <p class="dash-status">Change these before distributing the module, then use <b>Export a configured copy</b> to produce a file with your settings baked in for your learners. These settings live only in this browser until you export.</p>
+    <div class="fset">
+      <div><label for="fTitle">Course title on the certificate</label><input type="text" id="fTitle"></div>
+      <div><label for="fName">Signatory name</label><input type="text" id="fName"></div>
+      <div><label for="fRole">Signatory designation</label><input type="text" id="fRole"></div>
+      <div><label for="fCut">Cut score (%)</label><input type="number" id="fCut" min="50" max="100" step="1"></div>
+      <div><label for="fItems">Items per attempt</label><input type="number" id="fItems" min="10" max="78" step="1"></div>
+      <div><label for="fMin">Time limit (minutes)</label><input type="number" id="fMin" min="10" max="240" step="5"></div>
+      <div><label for="fAtt">Attempts allowed</label><input type="number" id="fAtt" min="1" max="10" step="1"></div>
+      <div><label for="fLock">Lock between attempts (hours)</label><input type="number" id="fLock" min="0" max="168" step="1"></div>
+      <div><label for="fRet">Retention bar — units required of 20</label><input type="number" id="fRet" min="0" max="20" step="1"></div>
+    </div>
+
+    <div class="sigfield">
+      <label for="fPhoto">Signature image <span class="opt">(optional)</span></label>
+      <input type="file" id="fPhoto" accept="image/png,image/jpeg,image/webp">
+      <div class="sigprev" id="sigPrev" hidden>
+        <span class="sigbox"><img id="sigImg" alt="Signature preview"></span>
+        <span class="sigmeta" id="sigMeta"></span>
+        <button type="button" class="btn ghost sm" id="sigClear">Remove</button>
+      </div>
+      <p class="dash-status" style="margin:.6em 0 0">Scan or photograph your signature on white paper. It is downscaled to 600&nbsp;px wide, the paper is matted out so only the ink remains, and the result is stored inside the file &mdash; so it travels with the exported copy and adds to its size. A PNG that already has a transparent background is used as-is.</p>
+    </div>
+    <div class="btnrow">
+      <button class="btn ghost" id="exportCopy">Export a configured copy</button>
+      <button class="btn danger" id="eraseAll">Erase all my progress</button>
+    </div>
+    <p class="dash-status" style="margin-top:.7em">Two recurring traps when publishing: uploading the <i>unconfigured</i> file (so the certificate carries no signatory), and embedding a full-resolution photograph (base64 adds about a third to its size — resize to roughly 400&nbsp;&times;&nbsp;400 first).</p>
+  </div>
+</section>
