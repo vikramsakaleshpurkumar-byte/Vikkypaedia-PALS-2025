@@ -1,10 +1,10 @@
 {
   "format": "vikkypaedia-completion-record",
-  "formatVersion": 1,
+  "formatVersion": 2,
   "module": {
     "id": "pals2025",
     "title": "Paediatric Advanced Life Support 2025",
-    "version": "4.0.0",
+    "version": "4.0.1",
     "build": "2026-09-24"
   },
   "learner": {
@@ -15,8 +15,8 @@
     "track": "Advanced",
     "setting": "rc"
   },
-  "enrolledAt": 1790259291976,
-  "issuedAt": 1790259296808,
+  "enrolledAt": 1790264068063,
+  "issuedAt": 1790264073335,
   "result": {
     "unitsMastered": 20,
     "unitsTotal": 20,
@@ -34,8 +34,318 @@
     "name": "Dr Vikram Sakaleshpur Kumar",
     "role": "Medical Educator"
   },
-  "verificationCode": "PA26-03T7-P94",
+  "verificationCode": "PA26-0437-AY3",
   "attestation": "Self-attested. Generated on the learner's own device from local progress data. Re-derivable, not tamper-proof: treat it as a signed statement by the learner, not as proof issued by a third party.",
   "scope": "Not the AHA PALS course. Confers no PALS provider status, procedural competence, licence or clinical privilege.",
-  "checksum": "0M6F8ZF"
+  "checksum": "1Y4KMC5",
+  "detail": {
+    "units": [
+      {
+        "n": 1,
+        "part": "A",
+        "title": "Why children arrest",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 2,
+        "part": "A",
+        "title": "The systematic approach",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 3,
+        "part": "A",
+        "title": "High-performance teams",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 4,
+        "part": "B",
+        "title": "High-quality CPR",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 5,
+        "part": "B",
+        "title": "Choking and defibrillation",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 6,
+        "part": "B",
+        "title": "Airway and ventilation in arrest",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 7,
+        "part": "B",
+        "title": "Access and drugs",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 8,
+        "part": "C",
+        "title": "Respiratory failure: stopping the slide",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 9,
+        "part": "C",
+        "title": "Shock: stopping the slide",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 10,
+        "part": "C",
+        "title": "Bradycardia",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 11,
+        "part": "C",
+        "title": "Tachycardia",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 12,
+        "part": "D",
+        "title": "The rhythms of arrest",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 13,
+        "part": "D",
+        "title": "Nonshockable arrest: asystole and PEA",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 14,
+        "part": "D",
+        "title": "Shockable arrest: VF and pulseless VT",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 15,
+        "part": "D",
+        "title": "Is CPR working? Monitoring and reversible causes",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 16,
+        "part": "D",
+        "title": "Special circumstances",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 17,
+        "part": "E",
+        "title": "Post-cardiac arrest care",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 18,
+        "part": "E",
+        "title": "Predicting outcome and life after arrest",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 19,
+        "part": "E",
+        "title": "Families, stopping, and systems",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      },
+      {
+        "n": 20,
+        "part": "E",
+        "title": "Capstone: follow the child",
+        "status": "mastered",
+        "items": 2,
+        "ok": 2,
+        "firstSeen": 0,
+        "firstRight": 0,
+        "misses": 0,
+        "hinted": 0,
+        "cw": 0,
+        "retained": true
+      }
+    ],
+    "calibration": {
+      "sure": [
+        0,
+        0
+      ],
+      "fairly": [
+        0,
+        0
+      ],
+      "guessing": [
+        0,
+        0
+      ]
+    },
+    "exam": [
+      {
+        "at": 1790264072157,
+        "pct": 96,
+        "n": 50,
+        "timedOut": false,
+        "critMiss": 0,
+        "miss": {}
+      }
+    ],
+    "studyDays": 0
+  },
+  "detailChecksum": "0LLIWLX"
 }

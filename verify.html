@@ -113,6 +113,14 @@ a{color:var(--brand)}
             r.result.retentionUnits, r.result.bestScore, r.result.cutScore,
             r.result.certified ? 1 : 0, r.verificationCode].join("|");
   }
+  function detailBasis(r){
+    var d = r.detail;
+    return ["vkp-cd1", r.checksum,
+      d.units.map(function(u){ return [u.n, u.status, u.ok, u.firstSeen, u.firstRight, u.misses, u.hinted, u.cw, u.retained ? 1 : 0].join(":"); }).join(","),
+      [d.calibration.sure.join("/"), d.calibration.fairly.join("/"), d.calibration.guessing.join("/")].join(","),
+      d.exam.map(function(a){ return [a.at, a.pct, a.n, a.critMiss].join(":"); }).join(","),
+      d.studyDays].join("|");
+  }
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function d(ms){ if(!ms) return "—"; try{ return new Date(ms).toLocaleString(); }catch(e){ return String(ms); } }
@@ -166,6 +174,12 @@ a{color:var(--brand)}
       ["Verification code", "<code>" + esc(r.verificationCode || "—") + "</code>"],
       ["Checksum", "<code>" + esc(r.checksum || "—") + "</code> — recomputed <code>" + esc(expected) + "</code>"]
     ];
+    if (r.detail && r.detail.units){
+      var dOk = false; try { dOk = fnv(detailBasis(r)) === r.detailChecksum; } catch(e){}
+      rows.push(["Unit detail (for the class report)", r.detail.units.length + " units · " + (dOk ? "detail checksum matches" : "detail checksum does NOT match — the unit figures were changed")]);
+    } else {
+      rows.push(["Unit detail (for the class report)", "Not included — this record came from an older module version"]);
+    }
     $("#rows").innerHTML = rows.map(function(x){
       return "<tr><th>" + esc(x[0]) + "</th><td>" + (/^<code>/.test(x[1]) ? x[1] : esc(x[1])) + "</td></tr>";
     }).join("");
