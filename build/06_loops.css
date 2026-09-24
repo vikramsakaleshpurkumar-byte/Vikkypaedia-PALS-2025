@@ -106,3 +106,10 @@
   html.printing-doc .printdoc pre{white-space:pre-wrap;font-size:7.5pt}
   .toasthost,.rvw,.burst{display:none !important}
 }
+/* cross-module links */
+.box.deeper{border:1px solid var(--line-2);border-left:3px solid var(--blue, var(--brand));background-color:var(--surface-2)}
+.box.deeper h5{color:var(--brand-ink)}
+.box.deeper ul{margin:0 0 .4em;padding-left:1.15em}
+.box.deeper li{margin:.3em 0}
+.box.deeper a{color:var(--brand-ink);font-weight:600}
+.box.deeper .roles-note{font-size:.8rem;color:var(--ink-2)}

@@ -15,6 +15,7 @@ unit(8, "C", "Respiratory failure: stopping the slide",
           "nurse": "Escalate falling consciousness or effort even if SpO₂ looks acceptable on oxygen.",
           "pg": "Classify the problem and decide on bag-mask ventilation, non-invasive support or intubation.",
           "fac": "Link this unit to OxyVent Units 2, 3 and 7 for learners who need depth."}),
+   deeper([("oxy", 2, "recognising distress and failure"), ("oxy", 3, "oxygenation is not ventilation"), ("oxy", 8, "high-flow, CPAP and NIV (Units 8–10)")]),
    sec(1, "Distress or failure?", table(
      ["Respiratory distress", "Respiratory failure"],
      [["Fast breathing, recession, flaring, noisy breathing", "Slow or irregular breathing, weak effort, apnoea"],
@@ -77,6 +78,7 @@ unit(9, "C", "Shock: stopping the slide",
           "nurse": "Reassess after every fluid bolus: heart rate, perfusion, liver size, crackles.",
           "pg": "Match fluids to the setting (SSC 2026) and start a vasoactive infusion when fluid is not enough.",
           "fac": "Link this unit to the Approach to the Sick Child module, Part C, for the full shock teaching."}),
+   deeper([("sc", 8, "fluids done right"), ("sc", 9, "sepsis: the first hour (SSC 2026)"), ("sc", 10, "vasoactives and the failing heart")]),
    sec(1, "Compensated or hypotensive", '''
   <p><b>Compensated shock</b>: tachycardia, cool peripheries, prolonged capillary refill, weak peripheral pulses, reduced urine output, with a <b>normal</b> blood pressure. <b>Hypotensive shock</b>: systolic pressure below the age threshold (Unit 2). Hypotension is a late sign in children and signals imminent arrest.</p>'''),
 

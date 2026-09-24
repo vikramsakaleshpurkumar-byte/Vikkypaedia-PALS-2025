@@ -15,6 +15,7 @@ unit(17, "E", "Post-cardiac arrest care",
           "nurse": "Monitor temperature continuously, blood pressure closely, and report seizures.",
           "pg": "Set and adjust targets; arrange transfer to intensive care.",
           "fac": "Teach the first hour after ROSC as its own scenario, not an afterthought."}),
+   deeper([("oxy", 19, "transport and the oxygen calculation"), ("sc", 20, "referral and transport")]),
    sec(1, "Targets after ROSC", table(
      ["Target", "2025 AHA/AAP recommendation"],
      [["Temperature", "Continuous central monitoring; <b>avoid central temperature above 37.5 °C</b>"],

@@ -256,6 +256,7 @@ unit(16, "D", "Special circumstances",
           "nurse": "Prepare naloxone, adrenaline for anaphylaxis, and warming equipment.",
           "pg": "Adapt the pathway to the cause, and call specialists early.",
           "fac": "Run one special-circumstance scenario in every simulation cycle."}),
+   deeper([("sc", 12, "poisoning and antidotes"), ("sc", 14, "snakes and scorpions"), ("sc", 15, "trauma, burns and drowning")]),
    sec(1, "Common special circumstances", table(
      ["Situation", "Extra step"],
      [["<b>Opioid overdose</b>", "Ventilate first; naloxone if respiratory arrest with a pulse; standard CPR if no pulse"],

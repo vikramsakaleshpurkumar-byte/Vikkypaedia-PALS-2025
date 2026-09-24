@@ -15,6 +15,7 @@ unit(4, "B", "High-quality CPR",
           "nurse": "Start compressions, swap every 2 minutes, and speak up when quality drops.",
           "pg": "Monitor CPR quality as leader: rate, depth, recoil, pauses, ventilation.",
           "fac": "Use a feedback manikin; measure the pause before and after each shock."}),
+   deeper([("nrp", None, "resuscitation at birth follows a different algorithm")]),
    sec(1, "Recognise arrest and start", '''
   <p>Unresponsive, not breathing or only gasping: shout for help, activate the emergency response, and check a pulse (brachial in infants, carotid or femoral in children) for <b>no more than 10 seconds</b>. No definite pulse &mdash; start compressions. A pulse below 60/min with poor perfusion despite oxygenation and ventilation also needs compressions.</p>'''),
 
@@ -144,6 +145,7 @@ unit(6, "B", "Airway and ventilation in arrest",
           "nurse": "Prepare suction, bag, masks, airway adjuncts and ETCO₂; watch chest rise.",
           "pg": "Decide when to intubate, confirm with waveform ETCO₂, and prevent hyperventilation.",
           "fac": "Assess bag-mask skill with DOPS before assessing intubation."}),
+   deeper([("oxy", 7, "effective bag-mask breaths"), ("oxy", 11, "preparing for safer intubation")]),
    sec(1, "Bag-mask first", '''
   <p>Bag-mask ventilation (BMV) with oxygen is effective for most children in arrest and may be as good as intubation in out-of-hospital arrest. Two-person technique gives a better seal. Each breath over about 1 second, enough to make the chest rise. Oropharyngeal airways help if the airway obstructs. See OxyVent Unit 7 for the full skill.</p>'''),
 

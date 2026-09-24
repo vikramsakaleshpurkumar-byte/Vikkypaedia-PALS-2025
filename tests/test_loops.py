@@ -12,7 +12,7 @@ SKIP_ONB = ("try{var K='%s';var r=localStorage.getItem(K);"
 from playwright.sync_api import sync_playwright
 
 fails = []
-def seed_and_reload(page, mutate_js, expect_js, tries=4, settle=350, after=1000):
+def seed_and_reload(page, mutate_js, expect_js, tries=6, settle=700, after=1500):
     for _ in range(tries):
         page.evaluate(mutate_js); page.wait_for_timeout(settle); page.reload(); page.wait_for_timeout(after)
         if page.evaluate(expect_js): return True

@@ -75,6 +75,7 @@ unit(2, "A", "The systematic approach",
           "nurse": "Take a full set of vital signs, recognise abnormal values for age and escalate.",
           "pg": "Classify the problem, intervene, and reassess after every intervention.",
           "fac": "Watch whether the learner reassesses after each action, not only whether they assess well once."}),
+   deeper([("sc", 2, "the sixty-second assessment"), ("sc", 5, "recognising shock and its types")]),
    sec(1, "First impression: the Paediatric Assessment Triangle", table(
      ["Side", "Look for"],
      [["<b>Appearance</b>", "Tone, interaction, consolability, look/gaze, speech/cry"],

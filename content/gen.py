@@ -175,3 +175,22 @@ def move_answer(n, qi, target):
         return _re.sub(r"<b>[A-D]</b>", lambda _m: "<b>%s</b>" % next(it), lab) + seg[m.end():]
     head, items = parts[0], sorted((_order(x) for x in parts[1:]), key=lambda s: s[3])
     q.wrong = head + " ".join(p.strip() for p in items)
+
+
+SITE = "https://vikramsakaleshpurkumar-byte.github.io/"
+MODS = {"oxy": ("Vikkypaedia-OxyVent-Module/", "OxyVent"),
+        "sc": ("Vikkypaedia-Module-Approach-to-a-Sick-child/", "Approach to the Sick Child"),
+        "nrp": ("Vikkypaedia-NRP-2025/", "Neonatal Resuscitation 2025"),
+        "met": ("Vikkypaedia-Metabolic-Child-MOOC/", "The Metabolic Child")}
+
+
+def deeper(links):
+    """'Go deeper' box: links into other Vikkypaedia modules. links = [(mod, unit_or_None, label)]."""
+    li = []
+    for mod, u, label in links:
+        path, name = MODS[mod]
+        href = SITE + path + (("#u%d" % u) if u else "")
+        li.append('<li><a href="%s" target="_blank" rel="noopener">%s%s</a> &mdash; %s</li>'
+                  % (href, name, (" &middot; Unit %d" % u) if u else "", label))
+    return ('<div class="box deeper">\n  <h5>Go deeper in another module</h5>\n  <ul>%s</ul>\n'
+            '  <p class="roles-note">Opens in a new tab. Units there unlock by mastery, as here.</p>\n</div>') % "".join(li)
