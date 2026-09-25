@@ -362,6 +362,8 @@ sup{font-size:.68em;line-height:0;vertical-align:.45em}
   box-shadow:var(--sh-1);
 }
 .chip b{color:var(--ink);font-weight:700}
+.cert-chip{text-decoration:none;border-color:color-mix(in srgb,var(--brand) 38%,var(--line));background:var(--brand-soft);color:var(--brand-ink)}
+.cert-chip:hover{border-color:var(--brand);transform:translateY(-1px)}
 
 /* hero progress card */
 .hero-card{
@@ -385,6 +387,28 @@ sup{font-size:.68em;line-height:0;vertical-align:.45em}
 .hero-card h2{font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);margin:0 0 .9em;font-weight:800}
 .hero-card .hc-note{font-size:.84rem;color:var(--ink-3);margin:.75em 0 0}
 .hero-card .btnrow{justify-content:center;margin-top:.2em}
+.cert-path{
+  display:flex;gap:10px;align-items:flex-start;text-align:left;margin:1.1em 0 .7em;
+  padding:12px;border:1px solid color-mix(in srgb,var(--brand) 28%,var(--line));
+  border-radius:14px;background:linear-gradient(135deg,var(--brand-soft),var(--surface));
+}
+.cert-path-icon{
+  flex:0 0 30px;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;
+  background:var(--brand);color:#fff;font-weight:900;box-shadow:0 5px 14px var(--brand-glow);
+}
+.cert-path b{display:block;font-size:.88rem;line-height:1.25;color:var(--ink)}
+.cert-path span:not(.cert-path-icon){display:block;margin-top:.25em;font-size:.75rem;line-height:1.45;color:var(--ink-2)}
+.cert-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.cert-actions a{
+  min-height:44px;display:flex;align-items:center;justify-content:center;padding:.55em .65em;
+  border:1px solid var(--line-2);border-radius:10px;background:var(--surface);color:var(--brand-ink);
+  font-size:.73rem;font-weight:750;line-height:1.25;text-decoration:none;
+}
+.cert-actions a:hover{border-color:var(--brand);background:var(--brand-soft)}
+.cert-gate-card{position:relative;overflow:hidden;border-color:color-mix(in srgb,var(--brand) 30%,var(--line))}
+.cert-gate-card::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--brand)}
+.cert-gate-card .cert-sample-link{display:inline-flex;align-items:center;min-height:44px;margin-top:.35em;font-weight:750}
+@media(max-width:480px){.cert-actions{grid-template-columns:1fr}}
 
 /* ============================================================
    STEPPER (learning arc)
