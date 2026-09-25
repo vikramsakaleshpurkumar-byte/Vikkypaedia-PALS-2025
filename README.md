@@ -99,3 +99,12 @@ See `CONTRIBUTING.md`. The module is licensed CC BY-NC-SA 4.0, **excluding** the
 ## Disclaimer
 
 This module is education, not a clinical protocol, and not certification to practise. Verify every dose against your institution's protocol.
+
+## Interactive megacodes (engine v2.2)
+
+Six branching cases played one decision at a time against a patient monitor, in their own section before the final assessment. Each case opens when its Part opens. Wrong calls cost time or change the patient, critical errors (tenfold doses, a shock with a pulse, compressions before effective ventilation, and similar) are flagged, and every option is explained. Options are shuffled on every run. The debrief shows right decisions, critical errors, key times against targets, and links back to the units.
+
+- **Formative only.** Results are stored locally, appear in the completion record (`detail.megacodes`, covered by the detail checksum) and in the faculty class report on the hub. They are not a certification criterion.
+- **Authoring:** cases live in `megacodes/cases.py`. Every dose is taken from this module's drug annex (Appendix E) and worked out for the stated weight. Compile with `python megacodes/make.py`, which validates the graph (every node reachable, a correct option at every step, correct-only paths acyclic and ending well, only `<b>`/`<i>` markup) and writes `build/86_megacodes.html`. Then run `python build.py`.
+- The player (`build/87_megacode.js`) is shared by every Vikkypaedia module and does nothing in a module without cases.
+- Clinically reviewed against the 2025 AHA/AAP guidelines before release (2026-09-24). Re-review whenever the guidelines change.

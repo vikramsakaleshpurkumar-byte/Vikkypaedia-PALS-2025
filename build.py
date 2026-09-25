@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble a single-file Vikkypaedia module (Standard engine v2.1)."""
+"""Assemble a single-file Vikkypaedia module (Standard engine v2.2)."""
 EXPECT_UNITS, EXPECT_ITEMS = 20, 40
 import os, re, sys
 
@@ -36,11 +36,18 @@ if os.path.exists(_sig) and "@@SIGNATURE@@" in script:
     script = script.replace("@@SIGNATURE@@", "data:image/png;base64," + base64.b64encode(open(_sig, "rb").read()).decode())
 assert "/*@@LOOPS@@*/" in script, "engine is missing the LOOPS marker"
 script = script.replace("/*@@LOOPS@@*/", loops_js)
+# v2.2: interactive megacodes. The player is shared; case data (86) exists only where a module has cases.
+mega_js = read("87_megacode.js")
+assert "/*@@MEGA@@*/" in script, "engine is missing the MEGA marker"
+script = script.replace("/*@@MEGA@@*/", mega_js)
+mega_html = read("86_megacodes.html")
+if mega_html:
+    assert "window.VKP_MEGACODES" in mega_html and 'id="megacodes"' in mega_html, "86_megacodes.html is malformed"
 assert head.count("</style>") >= 1
 head = head.replace("</style>", loops_css + "\n</style>", 1)
 
 shell = shell.replace("<!--UNITS-->", units)
-shell = shell.replace("<!--ASSESSMENT-->", assess)
+shell = shell.replace("<!--ASSESSMENT-->", (mega_html + "\n" if mega_html else "") + assess)
 shell = shell.replace("<!--APPENDICES-->", apps)
 
 html = head + shell + modjs + examjs + figjs + script
@@ -73,7 +80,7 @@ for b in blocks[1:]:
     if n != 1:
         errs.append("question %s has %d correct options (expected 1)" % (qid, n))
 
-for marker in ["@@SIGNATURE@@", "/*@@LOOPS@@*/", "<!--UNITS-->", "<!--ASSESSMENT-->", "<!--APPENDICES-->", "PLACEHOLDER", "TODO", "TKTK"]:
+for marker in ["@@SIGNATURE@@", "/*@@LOOPS@@*/", "/*@@MEGA@@*/", "<!--UNITS-->", "<!--ASSESSMENT-->", "<!--APPENDICES-->", "PLACEHOLDER", "TODO", "TKTK"]:
     if marker in html:
         errs.append("leftover marker: %s" % marker)
 

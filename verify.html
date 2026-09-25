@@ -119,7 +119,11 @@ a{color:var(--brand)}
       d.units.map(function(u){ return [u.n, u.status, u.ok, u.firstSeen, u.firstRight, u.misses, u.hinted, u.cw, u.retained ? 1 : 0].join(":"); }).join(","),
       [d.calibration.sure.join("/"), d.calibration.fairly.join("/"), d.calibration.guessing.join("/")].join(","),
       d.exam.map(function(a){ return [a.at, a.pct, a.n, a.critMiss].join(":"); }).join(","),
-      d.studyDays].join("|");
+      d.studyDays].join("|") + megaBasis(d);
+  }
+  function megaBasis(d){
+    if (!d.megacodes || !d.megacodes.length) return "";
+    return "|mc:" + d.megacodes.map(function(m){ return [m.id, m.runs, m.best, m.crit, m.secs].join(":"); }).join(",");
   }
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -177,6 +181,9 @@ a{color:var(--brand)}
     if (r.detail && r.detail.units){
       var dOk = false; try { dOk = fnv(detailBasis(r)) === r.detailChecksum; } catch(e){}
       rows.push(["Unit detail (for the class report)", r.detail.units.length + " units · " + (dOk ? "detail checksum matches" : "detail checksum does NOT match — the unit figures were changed")]);
+      if (r.detail.megacodes && r.detail.megacodes.length){
+        rows.push(["Megacodes practised (formative)", r.detail.megacodes.map(function(m){ return m.title + ": best " + m.best + "%" + (m.crit ? ", " + m.crit + " critical" : "") + " (" + m.runs + (m.runs === 1 ? " run" : " runs") + ")"; }).join(" · ") + ". Practice only, not part of certification; covered by the detail checksum."]);
+      }
     } else {
       rows.push(["Unit detail (for the class report)", "Not included — this record came from an older module version"]);
     }

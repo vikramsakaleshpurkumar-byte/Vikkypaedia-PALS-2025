@@ -18,6 +18,7 @@ python tests/contrast.py
 python tests/offline_test.py
 python tests/print_test.py
 python tests/test_loops.py
+python tests/test_mega.py
 ```
 
 Each prints `OK` / `FAIL` per check and ends with `FAILURES: none` when the build is sound.
@@ -51,3 +52,4 @@ before the write has landed — the page then boots from an empty store and the 
 perhaps one run in six. Use the `seed_and_reload` helper, which writes, lets it settle,
 reloads, checks the state actually took, and retries. This is a browser behaviour, not a
 defect in the module: the module reads what is there and behaves correctly either way.
+| `test_mega.py` | Megacode locking by Part; every case along its correct path (100%, no critical errors, key times met); wrong and critical calls; personal best kept over a worse run; option shuffling; keyboard play; live-region announcements; the strip description; contrast in both themes; the completion record and `verify.html` (including a tampered megacode score); 390 px width; no errors or network requests |

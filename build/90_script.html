@@ -12,7 +12,7 @@
 var MC        = window.VKP_MODULE;
 var VERSION   = MC.version;
 var BUILD     = MC.build;
-var ENGINE    = "vkp-standard-2.1";
+var ENGINE    = "vkp-standard-2.2";
 var MODULE    = { id: MC.id, title: MC.title };
 var STORE_KEY = MC.storeKey;
 var DAY       = 86400000;
@@ -459,6 +459,11 @@ function renderTOC(){
         nav.appendChild(a);
       });
     });
+    if (mgOn()){
+      nav.appendChild(el("h4",null,"Practice"));
+      var am = el("a",null,"Interactive megacodes"); am.href = "#megacodes";
+      am.addEventListener("click", closeDrawer); nav.appendChild(am);
+    }
     nav.appendChild(el("h4",null,"Assessment"));
     ["assessment|Final assessment &amp; certificate"].forEach(function(x){
       var parts = x.split("|"), a = el("a",null,parts[1]); a.href = "#" + parts[0];
@@ -832,7 +837,8 @@ function recordDetail(){
     calibration: { sure: c.s, fairly: c.f, guessing: c.g },
     exam: (S.exam.attempts || []).map(function(a){
       return { at:a.at, pct:a.pct, n:a.n, timedOut:!!a.timedOut, critMiss:a.critMiss || 0, miss:a.miss || {} }; }),
-    studyDays: Object.keys(S.days || {}).length
+    studyDays: Object.keys(S.days || {}).length,
+    megacodes: mgRecord()
   };
 }
 function detailBasis(r){
@@ -841,7 +847,13 @@ function detailBasis(r){
     d.units.map(function(u){ return [u.n, u.status, u.ok, u.firstSeen, u.firstRight, u.misses, u.hinted, u.cw, u.retained ? 1 : 0].join(":"); }).join(","),
     [d.calibration.sure.join("/"), d.calibration.fairly.join("/"), d.calibration.guessing.join("/")].join(","),
     d.exam.map(function(a){ return [a.at, a.pct, a.n, a.critMiss].join(":"); }).join(","),
-    d.studyDays].join("|");
+    d.studyDays].join("|") + megaBasis(d);
+}
+/* Megacode lines join the detail checksum only when present, so format-2 records
+   from engine 2.1 (no megacodes) keep the same basis and still verify. */
+function megaBasis(d){
+  if (!d.megacodes || !d.megacodes.length) return "";
+  return "|mc:" + d.megacodes.map(function(m){ return [m.id, m.runs, m.best, m.crit, m.secs].join(":"); }).join(",");
 }
 function downloadRecord(){
   var r = completionRecord();
@@ -1710,6 +1722,8 @@ function closeDrawer(){ var d=$("#drawer"); if(!d) return; d.setAttribute("data-
 
 /*@@LOOPS@@*/
 
+/*@@MEGA@@*/
+
 /* ------------------------------------------------------------------ refresh */
 var refreshT = null;
 function refresh(){
@@ -1723,6 +1737,7 @@ function refresh(){
     renderCriteria();
     renderProfileBar();
     renderLoops();
+    renderMega();
   }, 30);
 }
 
@@ -1760,6 +1775,7 @@ function boot(){
   wireOnboarding();
   wireSearch();
   wireLoops();
+  wireMega();
   renderFigures();
   injectTableLabels();
 

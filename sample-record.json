@@ -4,7 +4,7 @@
   "module": {
     "id": "pals2025",
     "title": "Paediatric Advanced Life Support 2025",
-    "version": "4.0.1",
+    "version": "4.1.0",
     "build": "2026-09-24"
   },
   "learner": {
@@ -15,8 +15,8 @@
     "track": "Advanced",
     "setting": "rc"
   },
-  "enrolledAt": 1790264068063,
-  "issuedAt": 1790264073335,
+  "enrolledAt": 1790267198489,
+  "issuedAt": 1790267205406,
   "result": {
     "unitsMastered": 20,
     "unitsTotal": 20,
@@ -34,10 +34,10 @@
     "name": "Dr Vikram Sakaleshpur Kumar",
     "role": "Medical Educator"
   },
-  "verificationCode": "PA26-0437-AY3",
+  "verificationCode": "PA26-1VV8-ZY7",
   "attestation": "Self-attested. Generated on the learner's own device from local progress data. Re-derivable, not tamper-proof: treat it as a signed statement by the learner, not as proof issued by a third party.",
   "scope": "Not the AHA PALS course. Confers no PALS provider status, procedural competence, licence or clinical privilege.",
-  "checksum": "1Y4KMC5",
+  "checksum": "08UCIKP",
   "detail": {
     "units": [
       {
@@ -337,7 +337,7 @@
     },
     "exam": [
       {
-        "at": 1790264072157,
+        "at": 1790267203375,
         "pct": 96,
         "n": 50,
         "timedOut": false,
@@ -345,7 +345,8 @@
         "miss": {}
       }
     ],
-    "studyDays": 0
+    "studyDays": 0,
+    "megacodes": []
   },
-  "detailChecksum": "0LLIWLX"
+  "detailChecksum": "1I7FDGY"
 }
